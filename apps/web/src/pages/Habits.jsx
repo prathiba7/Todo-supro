@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import Layout from '../components/Layout'
 import {
@@ -47,6 +47,53 @@ const MOTIVATIONAL_QUOTES = [
   "The secret of getting ahead is getting started.",
   "You don't have to be great to start, but you have to start to be great.",
 ]
+
+// Confetti component
+function Confetti() {
+  const confettiCount = 50
+  const colors = ['#8b5cf6', '#ec4899', '#f59e0b', '#10b981', '#3b82f6', '#ef4444']
+  
+  return (
+    <div className="fixed inset-0 pointer-events-none z-50 overflow-hidden">
+      {Array.from({ length: confettiCount }).map((_, i) => {
+        const randomColor = colors[Math.floor(Math.random() * colors.length)]
+        const randomX = Math.random() * 100
+        const randomDelay = Math.random() * 0.5
+        const randomDuration = 2 + Math.random() * 2
+        const randomRotation = Math.random() * 360
+        
+        return (
+          <motion.div
+            key={i}
+            initial={{
+              top: '-10%',
+              left: `${randomX}%`,
+              rotate: randomRotation,
+              opacity: 1
+            }}
+            animate={{
+              top: '110%',
+              rotate: randomRotation + 720,
+              opacity: 0
+            }}
+            transition={{
+              duration: randomDuration,
+              delay: randomDelay,
+              ease: 'easeIn'
+            }}
+            style={{
+              position: 'absolute',
+              width: '10px',
+              height: '10px',
+              backgroundColor: randomColor,
+              borderRadius: Math.random() > 0.5 ? '50%' : '0%',
+            }}
+          />
+        )
+      })}
+    </div>
+  )
+}
 
 function buildHeatmap(history, days = 75, currentHabitsCount = 0) {
   // Get today's date in local timezone, normalized to midnight
@@ -114,6 +161,9 @@ export default function Habits() {
   const [error, setError] = useState(null)
   const [toggling, setToggling] = useState(new Set())
   const [showAddModal, setShowAddModal] = useState(false)
+  const [showCelebration, setShowCelebration] = useState(false)
+  const [showConfetti, setShowConfetti] = useState(false)
+  const previousAllDoneRef = useRef(false)
   const [newHabit, setNewHabit] = useState({
     name: '',
     description: '',
@@ -178,6 +228,23 @@ export default function Habits() {
       })
     }
   }
+
+  // Check if all habits are completed and trigger celebration
+  useEffect(() => {
+    const doneCount = habits.filter((h) => h.is_done).length
+    const allDone = habits.length > 0 && doneCount === habits.length
+    
+    // Only trigger celebration when transitioning from not-all-done to all-done
+    if (allDone && !previousAllDoneRef.current && !loading) {
+      setShowCelebration(true)
+      setShowConfetti(true)
+      
+      // Hide confetti after 4 seconds
+      setTimeout(() => setShowConfetti(false), 4000)
+    }
+    
+    previousAllDoneRef.current = allDone
+  }, [habits, loading])
 
   const handleAddHabit = async (e) => {
     e.preventDefault()
@@ -356,13 +423,20 @@ export default function Habits() {
                   />
                 </div>
                 {allDone && (
-                  <motion.p
-                    initial={{ opacity: 0, y: -10 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    className="mt-2 text-center text-sm font-medium text-emerald-600"
+                  <motion.div
+                    initial={{ opacity: 0, scale: 0.9 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                    className="mt-4 p-4 bg-gradient-to-r from-emerald-50 to-green-50 rounded-xl border-2 border-emerald-200"
                   >
-                    ✨ All habits completed today! You're unstoppable!
-                  </motion.p>
+                    <p className="text-center text-lg font-bold text-emerald-600 flex items-center justify-center gap-2">
+                      <span className="text-2xl">🎉</span>
+                      All habits completed today!
+                      <span className="text-2xl">🎉</span>
+                    </p>
+                    <p className="text-center text-sm text-emerald-600 mt-1">
+                      You're absolutely crushing it! Keep up the amazing work! 💪
+                    </p>
+                  </motion.div>
                 )}
               </div>
             </motion.div>
@@ -666,6 +740,115 @@ export default function Habits() {
           </motion.div>
         )}
       </AnimatePresence>
+
+      {/* Celebration Modal */}
+      <AnimatePresence>
+        {showCelebration && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4"
+            onClick={() => setShowCelebration(false)}
+          >
+            <motion.div
+              initial={{ scale: 0.5, opacity: 0, rotate: -10 }}
+              animate={{ scale: 1, opacity: 1, rotate: 0 }}
+              exit={{ scale: 0.5, opacity: 0, rotate: 10 }}
+              transition={{ type: 'spring', duration: 0.5 }}
+              onClick={(e) => e.stopPropagation()}
+              className="relative bg-white rounded-3xl p-8 max-w-md w-full shadow-2xl"
+            >
+              {/* Close button */}
+              <button
+                onClick={() => setShowCelebration(false)}
+                className="absolute top-4 right-4 flex h-10 w-10 items-center justify-center rounded-full hover:bg-gray-100 transition-colors"
+              >
+                <i className="ti ti-x text-xl text-gray-600" />
+              </button>
+
+              {/* Content */}
+              <div className="text-center">
+                {/* Trophy Icon */}
+                <motion.div
+                  initial={{ scale: 0, rotate: -180 }}
+                  animate={{ scale: 1, rotate: 0 }}
+                  transition={{ delay: 0.2, type: 'spring', stiffness: 200 }}
+                  className="mx-auto mb-6 flex h-24 w-24 items-center justify-center rounded-full bg-gradient-to-br from-yellow-400 to-orange-500 shadow-2xl"
+                >
+                  <i className="ti ti-trophy text-5xl text-white" />
+                </motion.div>
+
+                {/* Title */}
+                <motion.h2
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: 0.3 }}
+                  className="text-3xl font-bold text-gray-900 mb-3"
+                >
+                  Congratulations! 🎉
+                </motion.h2>
+
+                {/* Message */}
+                <motion.p
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: 0.4 }}
+                  className="text-lg text-gray-600 mb-6"
+                >
+                  You've completed all your habits for today!
+                </motion.p>
+
+                {/* Stats */}
+                <motion.div
+                  initial={{ opacity: 0, scale: 0.8 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  transition={{ delay: 0.5 }}
+                  className="bg-gradient-to-r from-violet-50 to-purple-50 rounded-2xl p-6 mb-6"
+                >
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <p className="text-3xl font-bold text-violet-600">{habits.length}</p>
+                      <p className="text-sm text-gray-600">Habits Done</p>
+                    </div>
+                    <div>
+                      <p className="text-3xl font-bold text-orange-600">{streak}</p>
+                      <p className="text-sm text-gray-600">Day Streak</p>
+                    </div>
+                  </div>
+                </motion.div>
+
+                {/* Motivational message */}
+                <motion.p
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  transition={{ delay: 0.6 }}
+                  className="text-sm italic text-gray-500 mb-6"
+                >
+                  "Success is the sum of small efforts repeated day in and day out."
+                </motion.p>
+
+                {/* Action button */}
+                <motion.button
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: 0.7 }}
+                  whileHover={{ scale: 1.05 }}
+                  whileTap={{ scale: 0.95 }}
+                  onClick={() => setShowCelebration(false)}
+                  className="btn btn-primary w-full text-lg py-3"
+                >
+                  <i className="ti ti-check text-xl" />
+                  Awesome!
+                </motion.button>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* Confetti Animation */}
+      {showConfetti && <Confetti />}
     </Layout>
   )
 }
