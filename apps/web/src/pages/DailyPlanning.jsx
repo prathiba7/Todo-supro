@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import Layout from '../components/Layout'
-import { getTodayPlan, saveMorningPlan, saveEveningReview } from '../api/dailyPlans'
+import { getTodayPlan, saveMorningPlan, saveEveningReview, updateWaterIntake } from '../api/dailyPlans'
 
 const MOOD_OPTIONS = [
   { value: 'amazing', emoji: '🤩', label: 'Amazing' },
@@ -33,6 +33,10 @@ export default function DailyPlanning() {
   const [wins, setWins] = useState('')
   const [improvements, setImprovements] = useState('')
   const [gratitude, setGratitude] = useState('')
+  
+  // Water intake state (in litres)
+  const [waterIntake, setWaterIntake] = useState(0)
+  const [waterGoal, setWaterGoal] = useState(3) // Default 3 litres per day
 
   useEffect(() => {
     loadPlan()
@@ -60,6 +64,10 @@ export default function DailyPlanning() {
       if (data.wins) setWins(data.wins)
       if (data.improvements) setImprovements(data.improvements)
       if (data.gratitude) setGratitude(data.gratitude)
+      
+      // Load water intake data
+      if (data.water_intake !== undefined) setWaterIntake(data.water_intake)
+      if (data.water_goal) setWaterGoal(data.water_goal)
       
       // Auto-detect mode based on time and completion
       const hour = new Date().getHours()
@@ -134,8 +142,24 @@ export default function DailyPlanning() {
     }
   }
 
+  const handleWaterIntakeChange = async (newIntake) => {
+    setWaterIntake(newIntake)
+    
+    try {
+      const today = new Date().toISOString().split('T')[0]
+      await updateWaterIntake({
+        plan_date: today,
+        water_intake: newIntake,
+        water_goal: waterGoal,
+      })
+    } catch (err) {
+      console.error(err)
+    }
+  }
+
   const morningCompleted = plan?.morning_completed_at
   const eveningCompleted = plan?.evening_completed_at
+  const waterPercentage = Math.min((waterIntake / waterGoal) * 100, 100)
 
   return (
     <Layout>
@@ -574,6 +598,191 @@ export default function DailyPlanning() {
                 </div>
               </motion.div>
             )}
+
+            {/* Water Intake Tracker */}
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.2 }}
+              className="card p-6"
+            >
+              <div className="flex items-center justify-between mb-4">
+                <h3 className="text-lg font-semibold text-gray-900">
+                  <i className="ti ti-droplet text-xl text-blue-500 mr-2" />
+                  Water Intake
+                </h3>
+                <div className="text-sm text-gray-600">
+                  Goal: {waterGoal}L
+                </div>
+              </div>
+
+              <div className="flex flex-col md:flex-row items-center md:items-end gap-6">
+                {/* Visual Cup */}
+                <div className="flex-shrink-0">
+                  <div className="relative w-28 h-40 sm:w-32 sm:h-48 mx-auto">
+                    {/* Cup outline */}
+                    <svg
+                      viewBox="0 0 100 150"
+                      className="w-full h-full"
+                      style={{ filter: 'drop-shadow(0 4px 6px rgba(0, 0, 0, 0.1))' }}
+                    >
+                      {/* Cup body */}
+                      <path
+                        d="M 20 10 L 15 140 Q 15 145 20 145 L 80 145 Q 85 145 85 140 L 80 10 Z"
+                        fill="none"
+                        stroke="#cbd5e1"
+                        strokeWidth="3"
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                      />
+                      
+                      {/* Water fill */}
+                      <defs>
+                        <clipPath id="cupClip">
+                          <path d="M 20 10 L 15 140 Q 15 145 20 145 L 80 145 Q 85 145 85 140 L 80 10 Z" />
+                        </clipPath>
+                      </defs>
+                      
+                      <motion.rect
+                        x="15"
+                        y={145 - (waterPercentage * 1.35)}
+                        width="70"
+                        height={waterPercentage * 1.35}
+                        fill="url(#waterGradient)"
+                        clipPath="url(#cupClip)"
+                        initial={{ height: 0, y: 145 }}
+                        animate={{ 
+                          height: waterPercentage * 1.35, 
+                          y: 145 - (waterPercentage * 1.35) 
+                        }}
+                        transition={{ duration: 0.5, ease: 'easeOut' }}
+                      />
+                      
+                      {/* Water gradient */}
+                      <defs>
+                        <linearGradient id="waterGradient" x1="0%" y1="0%" x2="0%" y2="100%">
+                          <stop offset="0%" stopColor="#60a5fa" stopOpacity="0.9" />
+                          <stop offset="100%" stopColor="#3b82f6" stopOpacity="1" />
+                        </linearGradient>
+                      </defs>
+                      
+                      {/* Water surface animation */}
+                      {waterPercentage > 0 && (
+                        <motion.ellipse
+                          cx="50"
+                          cy={145 - (waterPercentage * 1.35)}
+                          rx="32"
+                          ry="3"
+                          fill="#93c5fd"
+                          opacity="0.6"
+                          animate={{
+                            ry: [3, 4, 3],
+                          }}
+                          transition={{
+                            duration: 2,
+                            repeat: Infinity,
+                            ease: 'easeInOut',
+                          }}
+                        />
+                      )}
+                    </svg>
+                    
+                    {/* Percentage text */}
+                    <div className="absolute inset-0 flex items-center justify-center">
+                      <motion.div
+                        key={waterIntake}
+                        initial={{ scale: 1.5, opacity: 0 }}
+                        animate={{ scale: 1, opacity: 1 }}
+                        className="text-center"
+                      >
+                        <div className="text-2xl font-bold text-gray-700">
+                          {waterIntake}L
+                        </div>
+                        <div className="text-xs text-gray-500">
+                          of {waterGoal}L
+                        </div>
+                      </motion.div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Controls */}
+                <div className="flex-1">
+                  <div className="space-y-4">
+                    {/* Quick add buttons */}
+                    <div className="flex gap-2 flex-wrap">
+                      <motion.button
+                        whileHover={{ scale: 1.05 }}
+                        whileTap={{ scale: 0.95 }}
+                        onClick={() => handleWaterIntakeChange(Math.min(waterIntake + 1, waterGoal))}
+                        disabled={waterIntake >= waterGoal}
+                        className="btn btn-primary flex-1 min-w-[100px]"
+                      >
+                        <i className="ti ti-plus text-lg" />
+                        Add Glass
+                      </motion.button>
+                      <motion.button
+                        whileHover={{ scale: 1.05 }}
+                        whileTap={{ scale: 0.95 }}
+                        onClick={() => handleWaterIntakeChange(Math.max(waterIntake - 1, 0))}
+                        disabled={waterIntake <= 0}
+                        className="btn btn-secondary flex-1 min-w-[100px]"
+                      >
+                        <i className="ti ti-minus text-lg" />
+                        Remove
+                      </motion.button>
+                    </div>
+
+                    {/* Progress bar */}
+                    <div>
+                      <div className="flex justify-between text-xs text-gray-600 mb-1">
+                        <span>{Math.round(waterPercentage)}% Complete</span>
+                        <span>{(waterGoal - waterIntake).toFixed(2)}L left</span>
+                      </div>
+                      <div className="progress-bar">
+                        <motion.div
+                          initial={{ width: 0 }}
+                          animate={{ width: `${waterPercentage}%` }}
+                          transition={{ duration: 0.5, ease: 'easeOut' }}
+                          className="h-full rounded-full bg-gradient-to-r from-blue-400 to-blue-600"
+                        />
+                      </div>
+                    </div>
+
+                    {/* Goal achieved message */}
+                    {waterIntake >= waterGoal && (
+                      <motion.div
+                        initial={{ opacity: 0, scale: 0.9 }}
+                        animate={{ opacity: 1, scale: 1 }}
+                        className="p-3 bg-gradient-to-r from-blue-50 to-cyan-50 rounded-lg border border-blue-200"
+                      >
+                        <p className="text-sm font-medium text-blue-700 text-center">
+                          🎉 Great job! You've reached your water goal!
+                        </p>
+                      </motion.div>
+                    )}
+
+                    {/* Set goal */}
+                    <div className="flex items-center gap-2 text-sm">
+                      <label className="text-gray-600">Daily Goal:</label>
+                      <input
+                        type="number"
+                        value={waterGoal}
+                        onChange={(e) => {
+                          const newGoal = parseInt(e.target.value) || 8
+                          setWaterGoal(newGoal)
+                          handleWaterIntakeChange(waterIntake)
+                        }}
+                        min="1"
+                        max="20"
+                        className="input w-20 text-center"
+                      />
+                      <span className="text-gray-600">Litres</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </motion.div>
           </>
         )}
       </div>

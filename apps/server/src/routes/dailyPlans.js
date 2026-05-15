@@ -223,6 +223,34 @@ router.get('/stats', async (req, res) => {
   }
 });
 
+// POST /api/daily-plans/water - Update water intake
+router.post('/water', async (req, res) => {
+  const { plan_date, water_intake, water_goal } = req.body;
+
+  if (!plan_date) {
+    return res.status(400).json({ error: 'Plan date is required.' });
+  }
+
+  try {
+    const result = await pool.query(
+      `INSERT INTO daily_plans (user_id, plan_date, water_intake, water_goal)
+       VALUES ($1, $2, $3, $4)
+       ON CONFLICT (user_id, plan_date)
+       DO UPDATE SET
+         water_intake = EXCLUDED.water_intake,
+         water_goal = EXCLUDED.water_goal,
+         updated_at = NOW()
+       RETURNING *`,
+      [req.user.id, plan_date, water_intake || 0, water_goal || 8]
+    );
+
+    res.json(result.rows[0]);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Failed to update water intake.' });
+  }
+});
+
 module.exports = router;
 
 // Made with Bob

@@ -36,4 +36,10 @@ export const getPlanStats = async () => {
   return data
 }
 
+// Update water intake
+export const updateWaterIntake = async (waterData) => {
+  const { data } = await client.post('/daily-plans/water', waterData)
+  return data
+}
+
 // Made with Bob

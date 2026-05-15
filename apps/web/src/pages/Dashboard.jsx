@@ -6,6 +6,7 @@ import Layout from '../components/Layout'
 import { getTasks, createTask, toggleTask, deleteTask } from '../api/tasks'
 import { getGoals } from '../api/goals'
 import { getTodayHabits, getStreak, toggleHabit } from '../api/habits'
+import { getTodayPlan, updateWaterIntake } from '../api/dailyPlans'
 
 const QUOTES = [
   "We are what we repeatedly do. Excellence is not an act, but a habit.",
@@ -32,22 +33,27 @@ export default function Dashboard() {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
   const [togglingHabit, setTogglingHabit] = useState(new Set())
+  const [waterIntake, setWaterIntake] = useState(0)
+  const [waterGoal, setWaterGoal] = useState(3)
 
   const quote = QUOTES[new Date().getDate() % QUOTES.length]
 
   useEffect(() => {
     ;(async () => {
       try {
-        const [t, g, h, s] = await Promise.all([
+        const [t, g, h, s, plan] = await Promise.all([
           getTasks(),
           getGoals(),
           getTodayHabits(),
           getStreak(),
+          getTodayPlan(),
         ])
         setTasks(t)
         setGoals(g)
         setHabits(h)
         setStreak(s.streak)
+        if (plan.water_intake !== undefined) setWaterIntake(plan.water_intake)
+        if (plan.water_goal) setWaterGoal(plan.water_goal)
       } catch (err) {
         setError('Could not load. Is the server running?')
         console.error(err)
@@ -121,9 +127,25 @@ export default function Dashboard() {
     }
   }
 
+  const handleWaterIntakeChange = async (newIntake) => {
+    setWaterIntake(newIntake)
+    
+    try {
+      const today = new Date().toISOString().split('T')[0]
+      await updateWaterIntake({
+        plan_date: today,
+        water_intake: newIntake,
+        water_goal: waterGoal,
+      })
+    } catch (err) {
+      console.error(err)
+    }
+  }
+
   const todoTasks = tasks.filter((t) => !t.is_done)
   const doneTasks = tasks.filter((t) => t.is_done)
   const habitsDone = habits.filter((h) => h.is_done).length
+  const waterPercentage = Math.min((waterIntake / waterGoal) * 100, 100)
 
   if (loading)
     return (
@@ -364,6 +386,83 @@ export default function Dashboard() {
                   })}
                 </div>
               )}
+            </div>
+
+            {/* Water Intake Widget */}
+            <div>
+              <SectionHeader title="Water Intake" to="/daily-planning" linkLabel="View Plan" icon="ti-droplet" />
+              <div className="mt-3 card p-4">
+                <div className="flex items-center justify-between mb-3">
+                  <div className="text-center flex-1">
+                    <div className="text-3xl font-bold text-blue-600">{waterIntake}L</div>
+                    <div className="text-xs text-gray-500">of {waterGoal}L</div>
+                  </div>
+                  <div className="relative w-20 h-28">
+                    <svg viewBox="0 0 100 150" className="w-full h-full">
+                      <path
+                        d="M 20 10 L 15 140 Q 15 145 20 145 L 80 145 Q 85 145 85 140 L 80 10 Z"
+                        fill="none"
+                        stroke="#cbd5e1"
+                        strokeWidth="3"
+                      />
+                      <defs>
+                        <clipPath id="dashboardCupClip">
+                          <path d="M 20 10 L 15 140 Q 15 145 20 145 L 80 145 Q 85 145 85 140 L 80 10 Z" />
+                        </clipPath>
+                        <linearGradient id="dashboardWaterGradient" x1="0%" y1="0%" x2="0%" y2="100%">
+                          <stop offset="0%" stopColor="#60a5fa" stopOpacity="0.9" />
+                          <stop offset="100%" stopColor="#3b82f6" stopOpacity="1" />
+                        </linearGradient>
+                      </defs>
+                      <motion.rect
+                        x="15"
+                        y={145 - (waterPercentage * 1.35)}
+                        width="70"
+                        height={waterPercentage * 1.35}
+                        fill="url(#dashboardWaterGradient)"
+                        clipPath="url(#dashboardCupClip)"
+                        initial={{ height: 0, y: 145 }}
+                        animate={{
+                          height: waterPercentage * 1.35,
+                          y: 145 - (waterPercentage * 1.35)
+                        }}
+                        transition={{ duration: 0.5 }}
+                      />
+                    </svg>
+                  </div>
+                </div>
+                <div className="grid grid-cols-2 gap-2">
+                  <motion.button
+                    whileHover={{ scale: 1.05 }}
+                    whileTap={{ scale: 0.95 }}
+                    onClick={() => handleWaterIntakeChange(Math.min(waterIntake + 0.25, waterGoal))}
+                    disabled={waterIntake >= waterGoal}
+                    className="btn btn-primary text-xs py-2"
+                  >
+                    <i className="ti ti-plus" />
+                    250ml
+                  </motion.button>
+                  <motion.button
+                    whileHover={{ scale: 1.05 }}
+                    whileTap={{ scale: 0.95 }}
+                    onClick={() => handleWaterIntakeChange(Math.max(waterIntake - 0.25, 0))}
+                    disabled={waterIntake <= 0}
+                    className="btn btn-secondary text-xs py-2"
+                  >
+                    <i className="ti ti-minus" />
+                    250ml
+                  </motion.button>
+                </div>
+                {waterIntake >= waterGoal && (
+                  <motion.p
+                    initial={{ opacity: 0, scale: 0.9 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                    className="mt-3 text-xs text-center font-medium text-blue-600"
+                  >
+                    🎉 Goal reached!
+                  </motion.p>
+                )}
+              </div>
             </div>
 
             {/* Goals Preview */}

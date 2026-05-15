@@ -73,6 +73,10 @@ CREATE TABLE IF NOT EXISTS daily_plans (
   morning_energy INT CHECK (morning_energy >= 1 AND morning_energy <= 5),
   morning_completed_at TIMESTAMPTZ,
   
+  -- Water Intake Tracking
+  water_intake INT DEFAULT 0,
+  water_goal INT DEFAULT 8,
+  
   -- Evening Review
   evening_notes TEXT,
   evening_mood VARCHAR(20),
