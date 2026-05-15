@@ -105,7 +105,7 @@ export default function Hard75() {
     <Layout>
       <div className="mx-auto max-w-3xl px-4 py-5 sm:px-6 sm:py-6 lg:px-8 lg:py-8">
         <div className="mb-6">
-          <h2 className="text-2xl font-bold text-white sm:text-3xl">75 Hard</h2>
+          <h2 className="text-2xl font-bold text-slate-900 sm:text-3xl">75 Hard</h2>
           <p className="mt-0.5 text-sm text-slate-500">
             {streak > 0 ? `${streak}-day streak` : 'Start your streak today'}
             {' · '}{totalComplete} of 75 days complete
@@ -113,12 +113,12 @@ export default function Hard75() {
         </div>
 
         {loading && (
-          <div className="py-16 text-center text-sm text-slate-600">Loading...</div>
+          <div className="py-16 text-center text-sm text-slate-500">Loading...</div>
         )}
         {error && !loading && (
-          <div className="mb-6 rounded-xl border border-red-800 bg-red-950 px-4 py-3 text-sm text-red-400">
+          <div className="mb-6 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-600">
             {error}
-            <button onClick={load} className="ml-3 underline text-red-300 hover:text-red-200">
+            <button onClick={load} className="ml-3 underline text-red-500 hover:text-red-700">
               Retry
             </button>
           </div>
@@ -126,24 +126,24 @@ export default function Hard75() {
 
         {!loading && today && (
           <>
-            <div className="mb-6 rounded-xl border border-slate-800 bg-slate-900 p-4 sm:p-5">
+            <div className="mb-6 rounded-xl border border-slate-200 bg-white p-4 shadow-sm sm:p-5">
               <div className="mb-4 grid grid-cols-1 gap-4 sm:grid-cols-2">
                 <div>
                   <p className="mb-1 text-xs font-semibold uppercase tracking-widest text-slate-500">
                     Today's habits
                   </p>
-                  <p className={`text-3xl font-bold tabular-nums sm:text-4xl ${allDone ? 'text-emerald-400' : 'text-white'}`}>
+                  <p className={`text-3xl font-bold tabular-nums sm:text-4xl ${allDone ? 'text-emerald-700' : 'text-slate-900'}`}>
                     {doneCount}
-                    <span className="text-2xl text-slate-700">/5</span>
+                    <span className="text-2xl text-slate-400">/5</span>
                   </p>
                 </div>
                 <div className="sm:text-right">
                   <p className="mb-1 text-xs font-semibold uppercase tracking-widest text-slate-500">
                     Streak
                   </p>
-                  <p className={`text-3xl font-bold tabular-nums sm:text-4xl ${streak >= 3 ? 'text-amber-400' : 'text-white'}`}>
+                  <p className={`text-3xl font-bold tabular-nums sm:text-4xl ${streak >= 3 ? 'text-amber-700' : 'text-slate-900'}`}>
                     {streak}
-                    <span className="text-2xl text-slate-700"> days</span>
+                    <span className="text-2xl text-slate-400"> days</span>
                   </p>
                 </div>
               </div>
@@ -153,14 +153,14 @@ export default function Hard75() {
                   <div
                     key={field}
                     className={`h-2.5 flex-1 rounded-full transition-all duration-500 ${
-                      today[field] ? 'bg-emerald-500' : 'bg-slate-800'
+                      today[field] ? 'bg-emerald-500' : 'bg-slate-200'
                     }`}
                   />
                 ))}
               </div>
 
               {allDone && (
-                <p className="mt-1 text-center text-xs font-medium text-emerald-500">
+                <p className="mt-1 text-center text-xs font-medium text-emerald-600">
                   All 5 done — you're unstoppable today.
                 </p>
               )}
@@ -175,33 +175,33 @@ export default function Hard75() {
                     key={field}
                     onClick={() => handleToggle(field)}
                     disabled={pending}
-                    className={`flex w-full items-center gap-3 rounded-xl border px-4 py-4 text-left transition-all sm:gap-4 sm:px-5 ${
+                    className={`flex w-full items-center gap-3 rounded-xl border px-4 py-4 text-left shadow-sm transition-all sm:gap-4 sm:px-5 ${
                       done
-                        ? 'border-emerald-900/60 bg-emerald-950/40'
-                        : 'border-slate-800 bg-slate-900 hover:border-slate-700 active:scale-[.99]'
+                        ? 'border-emerald-200 bg-emerald-50'
+                        : 'border-slate-200 bg-white hover:border-slate-300 active:scale-[.99]'
                     } ${pending ? 'cursor-wait opacity-60' : ''}`}
                   >
                     <div className={`flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-xl transition-all ${
-                      done ? 'bg-emerald-900/50' : 'bg-slate-800'
+                      done ? 'bg-emerald-100' : 'bg-slate-100'
                     }`}>
-                      <i className={`ti ${icon} text-lg ${done ? 'text-emerald-400' : 'text-slate-500'}`} aria-hidden="true" />
+                      <i className={`ti ${icon} text-lg ${done ? 'text-emerald-600' : 'text-slate-500'}`} aria-hidden="true" />
                     </div>
 
                     <div className="min-w-0 flex-1">
                       <p className={`text-sm font-semibold transition-all ${
-                        done ? 'text-emerald-300 line-through decoration-emerald-700' : 'text-white'
+                        done ? 'text-emerald-700 line-through decoration-emerald-400' : 'text-slate-900'
                       }`}>
                         {label}
                       </p>
                       <p className={`mt-0.5 text-xs leading-relaxed transition-all ${
-                        done ? 'text-emerald-900' : 'text-slate-600'
+                        done ? 'text-emerald-500' : 'text-slate-500'
                       }`}>
                         {sub}
                       </p>
                     </div>
 
                     <div className={`flex h-6 w-6 flex-shrink-0 items-center justify-center rounded-full border-2 transition-all duration-300 ${
-                      done ? 'border-emerald-500 bg-emerald-500' : 'border-slate-700'
+                      done ? 'border-emerald-500 bg-emerald-500' : 'border-slate-300'
                     }`}>
                       {done && <i className="ti ti-check text-xs text-white" aria-hidden="true" />}
                     </div>
@@ -210,20 +210,20 @@ export default function Hard75() {
               })}
             </div>
 
-            <div className="mb-6 rounded-xl border border-slate-800 bg-slate-900 p-4 sm:p-5">
+            <div className="mb-6 rounded-xl border border-slate-200 bg-white p-4 shadow-sm sm:p-5">
               <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-                <h3 className="text-xs font-semibold uppercase tracking-widest text-slate-400">
+                <h3 className="text-xs font-semibold uppercase tracking-widest text-slate-500">
                   75-day journey
                 </h3>
-                <div className="flex flex-wrap items-center gap-3 text-xs text-slate-600">
+                <div className="flex flex-wrap items-center gap-3 text-xs text-slate-500">
                   <span className="flex items-center gap-1.5">
-                    <span className="inline-block h-3 w-3 rounded-sm bg-emerald-700" />All done
+                    <span className="inline-block h-3 w-3 rounded-sm bg-emerald-500" />All done
                   </span>
                   <span className="flex items-center gap-1.5">
-                    <span className="inline-block h-3 w-3 rounded-sm bg-amber-800" />Partial
+                    <span className="inline-block h-3 w-3 rounded-sm bg-amber-400" />Partial
                   </span>
                   <span className="flex items-center gap-1.5">
-                    <span className="inline-block h-3 w-3 rounded-sm border border-slate-700 bg-slate-800" />Ahead
+                    <span className="inline-block h-3 w-3 rounded-sm border border-slate-200 bg-slate-100" />Ahead
                   </span>
                 </div>
               </div>
@@ -238,24 +238,24 @@ export default function Hard75() {
                       key={cell.iso}
                       title={`Day ${cell.day} · ${cell.label} · ${cell.status}`}
                       className={`aspect-square rounded-md transition-all cursor-default ${
-                        cell.isToday ? 'ring-2 ring-amber-500 ring-offset-1 ring-offset-slate-900' : ''
+                        cell.isToday ? 'ring-2 ring-amber-400 ring-offset-1 ring-offset-white' : ''
                       } ${
-                        cell.status === 'complete' ? 'bg-emerald-700'
-                        : cell.status === 'partial'  ? 'bg-amber-800'
-                        : cell.status === 'future'   ? 'border border-slate-800 bg-slate-900'
-                        : 'bg-slate-800'
+                        cell.status === 'complete' ? 'bg-emerald-500'
+                        : cell.status === 'partial'  ? 'bg-amber-400'
+                        : cell.status === 'future'   ? 'border border-slate-200 bg-slate-50'
+                        : 'bg-slate-200'
                       }`}
                     />
                   ))}
                 </div>
               </div>
 
-              <p className="mt-4 text-center text-xs text-slate-600">
+              <p className="mt-4 text-center text-xs text-slate-500">
                 {totalComplete} / 75 days complete · {75 - totalComplete} to go
               </p>
             </div>
 
-            <p className="px-2 text-center text-xs italic text-slate-700 sm:px-4">
+            <p className="px-2 text-center text-xs italic text-slate-500 sm:px-4">
               "{quote}"
             </p>
           </>

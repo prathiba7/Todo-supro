@@ -32,15 +32,34 @@ CREATE TABLE IF NOT EXISTS goals (
   created_at TIMESTAMPTZ DEFAULT NOW()
 );
 
--- 75 Hard daily log table
-CREATE TABLE IF NOT EXISTS hard75_logs (
+-- Custom habits table
+CREATE TABLE IF NOT EXISTS habits (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   user_id UUID REFERENCES users(id) ON DELETE CASCADE,
-  log_date DATE NOT NULL,
-  workout1_done BOOLEAN DEFAULT FALSE,
-  workout2_outdoor_done BOOLEAN DEFAULT FALSE,
-  water_done BOOLEAN DEFAULT FALSE,
-  reading_done BOOLEAN DEFAULT FALSE,
-  photo_done BOOLEAN DEFAULT FALSE,
-  UNIQUE(user_id, log_date)
+  name VARCHAR(255) NOT NULL,
+  description TEXT,
+  icon VARCHAR(50) DEFAULT 'ti-check',
+  color VARCHAR(50) DEFAULT 'emerald',
+  repeat_type VARCHAR(20) DEFAULT 'daily',
+  repeat_days INT DEFAULT 75,
+  is_active BOOLEAN DEFAULT TRUE,
+  sort_order INT DEFAULT 0,
+  created_at TIMESTAMPTZ DEFAULT NOW()
 );
+
+-- Habit logs table (replaces hard75_logs)
+CREATE TABLE IF NOT EXISTS habit_logs (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  user_id UUID REFERENCES users(id) ON DELETE CASCADE,
+  habit_id UUID REFERENCES habits(id) ON DELETE CASCADE,
+  log_date DATE NOT NULL,
+  is_done BOOLEAN DEFAULT FALSE,
+  created_at TIMESTAMPTZ DEFAULT NOW(),
+  UNIQUE(user_id, habit_id, log_date)
+);
+
+-- Index for faster queries
+CREATE INDEX IF NOT EXISTS idx_habit_logs_user_date ON habit_logs(user_id, log_date);
+CREATE INDEX IF NOT EXISTS idx_habits_user ON habits(user_id, is_active);
+
+-- Made with Bob

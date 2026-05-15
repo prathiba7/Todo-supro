@@ -6,7 +6,7 @@ import Register          from './pages/auth/Register'
 import Dashboard         from './pages/Dashboard'  // ← the new real import
 import Tasks             from './pages/Tasks'
 import Goals             from './pages/Goals'
-import Hard75 from './pages/Hard75'
+import Habits from './pages/Habits'
 
 const Placeholder = ({ name }) => (
   <div style={{ minHeight:'100vh', background:'#020617', display:'flex',
@@ -33,8 +33,8 @@ export default function App() {
           <Route path="/goals" element={
             <ProtectedRoute><Goals /></ProtectedRoute>
           }/>
-          <Route path="/75hard" element={
-            <ProtectedRoute><Hard75 /></ProtectedRoute>
+          <Route path="/habits" element={
+            <ProtectedRoute><Habits /></ProtectedRoute>
           }/>
 
           <Route path="/"  element={<Navigate to="/dashboard" replace />} />

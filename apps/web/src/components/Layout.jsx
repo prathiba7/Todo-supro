@@ -1,129 +1,132 @@
-import { useState } from 'react'
 import { Link, useLocation, useNavigate } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
+import { motion } from 'framer-motion'
 
-const NAV = [
-  { path: '/dashboard', icon: 'ti-home', label: 'Dashboard' },
+const navItems = [
+  { path: '/dashboard', icon: 'ti-layout-dashboard', label: 'Dashboard' },
   { path: '/tasks', icon: 'ti-checkbox', label: 'Tasks' },
   { path: '/goals', icon: 'ti-target', label: 'Goals' },
-  { path: '/75hard', icon: 'ti-flame', label: '75 Hard' },
+  { path: '/habits', icon: 'ti-flame', label: 'Habits' },
 ]
 
 export default function Layout({ children }) {
-  const { user, logout } = useAuth()
-  const { pathname } = useLocation()
+  const location = useLocation()
   const navigate = useNavigate()
-  const [mobileNavOpen, setMobileNavOpen] = useState(false)
+  const { user, logout } = useAuth()
 
   const handleLogout = () => {
     logout()
     navigate('/login')
   }
 
-  const handleNavigate = () => {
-    setMobileNavOpen(false)
-  }
-
   return (
-    <div className="min-h-screen bg-slate-950 text-left lg:flex">
-      <header className="sticky top-0 z-30 border-b border-slate-800 bg-slate-950/95 backdrop-blur lg:hidden">
-        <div className="flex items-center justify-between px-4 py-3">
-          <div className="min-w-0">
-            <p className="text-lg font-bold text-white tracking-tight">Supro</p>
-            <p className="truncate text-xs text-slate-500">{user?.name || user?.email || 'Welcome back'}</p>
-          </div>
-          <button
-            onClick={() => setMobileNavOpen((open) => !open)}
-            className="flex h-10 w-10 items-center justify-center rounded-xl border border-slate-800 bg-slate-900 text-slate-300 transition-all hover:border-slate-700 hover:text-white"
-            aria-label="Toggle navigation"
-            aria-expanded={mobileNavOpen}
-          >
-            <i className={`ti ${mobileNavOpen ? 'ti-x' : 'ti-menu-2'} text-lg`} aria-hidden="true" />
-          </button>
-        </div>
+    <div className="min-h-screen bg-gradient-to-br from-violet-50 via-purple-50 to-pink-50">
+      {/* Header */}
+      <motion.header
+        initial={{ y: -20, opacity: 0 }}
+        animate={{ y: 0, opacity: 1 }}
+        className="sticky top-0 z-50 glass-effect border-b border-white/20 shadow-soft"
+      >
+        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+          <div className="flex h-16 items-center justify-between">
+            {/* Logo */}
+            <Link to="/dashboard" className="flex items-center gap-2 group">
+              <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-violet-600 to-purple-600 shadow-lg group-hover:shadow-glow transition-all duration-300">
+                <i className="ti ti-rocket text-xl text-white" />
+              </div>
+              <span className="text-xl font-bold bg-gradient-to-r from-violet-600 to-purple-600 bg-clip-text text-transparent">
+                Supro
+              </span>
+            </Link>
 
-        {mobileNavOpen && (
-          <div className="border-t border-slate-800 bg-slate-950 px-4 py-4">
-            <nav className="space-y-2">
-              {NAV.map(({ path, icon, label }) => {
-                const active = pathname === path
+            {/* Desktop Navigation */}
+            <nav className="hidden md:flex items-center gap-1">
+              {navItems.map((item) => {
+                const isActive = location.pathname === item.path
                 return (
                   <Link
-                    key={path}
-                    to={path}
-                    onClick={handleNavigate}
-                    className={`flex items-center gap-3 rounded-xl px-3 py-3 text-sm transition-all ${
-                      active
-                        ? 'border border-amber-500/20 bg-amber-500/10 font-medium text-amber-400'
-                        : 'text-slate-400 hover:bg-slate-900 hover:text-white'
-                    }`}
+                    key={item.path}
+                    to={item.path}
+                    className="relative px-4 py-2 rounded-lg font-medium text-sm transition-all duration-200"
                   >
-                    <i className={`ti ${icon}`} aria-hidden="true" />
-                    <span>{label}</span>
+                    {isActive && (
+                      <motion.div
+                        layoutId="activeTab"
+                        className="absolute inset-0 bg-white rounded-lg shadow-md"
+                        transition={{ type: 'spring', bounce: 0.2, duration: 0.6 }}
+                      />
+                    )}
+                    <span className={`relative z-10 flex items-center gap-2 ${
+                      isActive ? 'text-violet-600' : 'text-gray-600 hover:text-gray-900'
+                    }`}>
+                      <i className={`${item.icon} text-lg`} />
+                      {item.label}
+                    </span>
                   </Link>
                 )
               })}
             </nav>
 
-            <div className="mt-4 space-y-3 rounded-2xl border border-slate-800 bg-slate-900 p-4">
-              <div className="min-w-0">
-                <p className="truncate text-sm font-medium text-slate-200">{user?.name}</p>
-                <p className="truncate text-xs text-slate-500">{user?.email}</p>
+            {/* User Menu */}
+            <div className="flex items-center gap-3">
+              <div className="hidden sm:block text-right">
+                <p className="text-sm font-medium text-gray-900">{user?.name}</p>
+                <p className="text-xs text-gray-500">{user?.email}</p>
               </div>
               <button
                 onClick={handleLogout}
-                className="flex w-full items-center justify-center gap-2 rounded-xl border border-slate-800 px-3 py-2.5 text-sm text-slate-300 transition-all hover:border-slate-700 hover:text-white"
+                className="flex h-10 w-10 items-center justify-center rounded-lg bg-white text-gray-600 hover:text-red-600 hover:bg-red-50 transition-all duration-200 shadow-sm hover:shadow-md"
+                title="Logout"
               >
-                <i className="ti ti-logout" aria-hidden="true" />
-                Sign out
+                <i className="ti ti-logout text-lg" />
               </button>
             </div>
           </div>
-        )}
-      </header>
-
-      <aside className="hidden w-56 shrink-0 border-r border-slate-800 bg-slate-900 lg:flex lg:flex-col">
-        <div className="border-b border-slate-800 px-5 py-5">
-          <p className="text-xl font-bold tracking-tight text-white">Supro</p>
-          <p className="mt-0.5 text-xs text-slate-600">by {user?.name || 'you'}</p>
         </div>
+      </motion.header>
 
-        <nav className="flex-1 space-y-0.5 px-3 py-4">
-          {NAV.map(({ path, icon, label }) => {
-            const active = pathname === path
+      {/* Main Content */}
+      <main className="mx-auto max-w-7xl px-4 py-6 sm:px-6 lg:px-8">
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.4 }}
+        >
+          {children}
+        </motion.div>
+      </main>
+
+      {/* Mobile Navigation */}
+      <motion.nav
+        initial={{ y: 100, opacity: 0 }}
+        animate={{ y: 0, opacity: 1 }}
+        className="md:hidden fixed bottom-0 left-0 right-0 z-50 glass-effect border-t border-white/20 shadow-xl"
+      >
+        <div className="grid grid-cols-4 gap-1 p-2">
+          {navItems.map((item) => {
+            const isActive = location.pathname === item.path
             return (
               <Link
-                key={path}
-                to={path}
-                className={`flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm transition-all ${
-                  active
-                    ? 'border border-amber-500/20 bg-amber-500/10 font-medium text-amber-400'
-                    : 'text-slate-500 hover:bg-slate-800 hover:text-white'
+                key={item.path}
+                to={item.path}
+                className={`flex flex-col items-center gap-1 py-2 px-3 rounded-xl transition-all duration-200 ${
+                  isActive
+                    ? 'bg-white text-violet-600 shadow-md'
+                    : 'text-gray-600 hover:bg-white/50'
                 }`}
               >
-                <i className={`ti ${icon}`} aria-hidden="true" />
-                {label}
+                <i className={`${item.icon} text-xl`} />
+                <span className="text-xs font-medium">{item.label}</span>
               </Link>
             )
           })}
-        </nav>
-
-        <div className="space-y-0.5 border-t border-slate-800 px-3 py-4">
-          <div className="px-3 py-2">
-            <p className="truncate text-sm font-medium text-slate-300">{user?.name}</p>
-            <p className="truncate text-xs text-slate-600">{user?.email}</p>
-          </div>
-          <button
-            onClick={handleLogout}
-            className="flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-sm text-slate-600 transition-all hover:bg-slate-800 hover:text-white"
-          >
-            <i className="ti ti-logout" aria-hidden="true" />
-            Sign out
-          </button>
         </div>
-      </aside>
+      </motion.nav>
 
-      <main className="min-w-0 flex-1 overflow-auto">{children}</main>
+      {/* Mobile Bottom Padding */}
+      <div className="md:hidden h-20" />
     </div>
   )
 }
+
+// Made with Bob

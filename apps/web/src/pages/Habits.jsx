@@ -1,0 +1,636 @@
+import { useState, useEffect } from 'react'
+import { motion, AnimatePresence } from 'framer-motion'
+import Layout from '../components/Layout'
+import {
+  getTodayHabits,
+  toggleHabit,
+  getStreak,
+  getHabitHistory,
+  createHabit,
+  deleteHabit,
+  getHabits
+} from '../api/habits'
+
+const ICON_OPTIONS = [
+  { value: 'ti-run', label: 'Run' },
+  { value: 'ti-dumbbell', label: 'Workout' },
+  { value: 'ti-book', label: 'Read' },
+  { value: 'ti-droplet', label: 'Water' },
+  { value: 'ti-apple', label: 'Healthy Eating' },
+  { value: 'ti-bed', label: 'Sleep' },
+  { value: 'ti-yoga', label: 'Yoga' },
+  { value: 'ti-bike', label: 'Bike' },
+  { value: 'ti-walk', label: 'Walk' },
+  { value: 'ti-meditation', label: 'Meditate' },
+  { value: 'ti-pencil', label: 'Write' },
+  { value: 'ti-code', label: 'Code' },
+  { value: 'ti-camera', label: 'Photo' },
+  { value: 'ti-music', label: 'Music' },
+  { value: 'ti-heart', label: 'Self-care' },
+]
+
+const COLOR_OPTIONS = [
+  { value: 'violet', class: 'bg-violet-500', lightClass: 'bg-violet-100', textClass: 'text-violet-600' },
+  { value: 'blue', class: 'bg-blue-500', lightClass: 'bg-blue-100', textClass: 'text-blue-600' },
+  { value: 'emerald', class: 'bg-emerald-500', lightClass: 'bg-emerald-100', textClass: 'text-emerald-600' },
+  { value: 'pink', class: 'bg-pink-500', lightClass: 'bg-pink-100', textClass: 'text-pink-600' },
+  { value: 'orange', class: 'bg-orange-500', lightClass: 'bg-orange-100', textClass: 'text-orange-600' },
+  { value: 'red', class: 'bg-red-500', lightClass: 'bg-red-100', textClass: 'text-red-600' },
+  { value: 'purple', class: 'bg-purple-500', lightClass: 'bg-purple-100', textClass: 'text-purple-600' },
+  { value: 'cyan', class: 'bg-cyan-500', lightClass: 'bg-cyan-100', textClass: 'text-cyan-600' },
+]
+
+const MOTIVATIONAL_QUOTES = [
+  "Small daily improvements lead to stunning results.",
+  "Discipline is choosing between what you want now and what you want most.",
+  "Success is the sum of small efforts repeated day in and day out.",
+  "The secret of getting ahead is getting started.",
+  "You don't have to be great to start, but you have to start to be great.",
+]
+
+function buildHeatmap(history, days = 75) {
+  const today = new Date()
+  today.setHours(12, 0, 0, 0)
+  const todayStr = today.toISOString().split('T')[0]
+
+  const dateMap = {}
+  history.forEach((log) => {
+    const date = log.log_date.split('T')[0]
+    if (!dateMap[date]) dateMap[date] = { total: 0, completed: 0 }
+    dateMap[date].total++
+    if (log.is_done) dateMap[date].completed++
+  })
+
+  return Array.from({ length: days }, (_, i) => {
+    const d = new Date(today)
+    d.setDate(today.getDate() - (days - 1) + i)
+    const iso = d.toISOString().split('T')[0]
+    const data = dateMap[iso]
+    const isFuture = iso > todayStr
+
+    const status = isFuture
+      ? 'future'
+      : !data
+      ? 'missed'
+      : data.completed === data.total
+      ? 'complete'
+      : data.completed > 0
+      ? 'partial'
+      : 'missed'
+
+    return {
+      iso,
+      isToday: iso === todayStr,
+      label: d.toLocaleDateString('en-GB', { day: 'numeric', month: 'short' }),
+      status,
+      day: i + 1,
+      completed: data?.completed || 0,
+      total: data?.total || 0,
+    }
+  })
+}
+
+export default function Habits() {
+  const [habits, setHabits] = useState([])
+  const [streak, setStreak] = useState(0)
+  const [history, setHistory] = useState([])
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState(null)
+  const [toggling, setToggling] = useState(new Set())
+  const [showAddModal, setShowAddModal] = useState(false)
+  const [newHabit, setNewHabit] = useState({
+    name: '',
+    description: '',
+    icon: 'ti-check',
+    color: 'violet',
+    repeat_days: 75,
+  })
+
+  useEffect(() => {
+    load()
+  }, [])
+
+  const load = async () => {
+    setLoading(true)
+    setError(null)
+    try {
+      const [h, s, hist] = await Promise.all([
+        getTodayHabits(),
+        getStreak(),
+        getHabitHistory(75),
+      ])
+      setHabits(h)
+      setStreak(s.streak)
+      setHistory(hist)
+    } catch (err) {
+      setError('Failed to load habits. Please try again.')
+      console.error(err)
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  const handleToggle = async (habitId) => {
+    if (toggling.has(habitId)) return
+    setToggling((p) => new Set([...p, habitId]))
+
+    // Optimistic update
+    setHabits((prev) =>
+      prev.map((h) => (h.id === habitId ? { ...h, is_done: !h.is_done } : h))
+    )
+
+    try {
+      await toggleHabit(habitId)
+      const s = await getStreak()
+      setStreak(s.streak)
+    } catch (err) {
+      // Revert on error
+      setHabits((prev) =>
+        prev.map((h) => (h.id === habitId ? { ...h, is_done: !h.is_done } : h))
+      )
+      console.error(err)
+    } finally {
+      setToggling((p) => {
+        const n = new Set(p)
+        n.delete(habitId)
+        return n
+      })
+    }
+  }
+
+  const handleAddHabit = async (e) => {
+    e.preventDefault()
+    if (!newHabit.name.trim()) return
+
+    try {
+      await createHabit(newHabit)
+      setShowAddModal(false)
+      setNewHabit({
+        name: '',
+        description: '',
+        icon: 'ti-check',
+        color: 'violet',
+        repeat_days: 75,
+      })
+      load()
+    } catch (err) {
+      console.error(err)
+      alert('Failed to create habit')
+    }
+  }
+
+  const handleDeleteHabit = async (habitId) => {
+    if (!confirm('Are you sure you want to delete this habit?')) return
+
+    try {
+      await deleteHabit(habitId)
+      load()
+    } catch (err) {
+      console.error(err)
+      alert('Failed to delete habit')
+    }
+  }
+
+  const doneCount = habits.filter((h) => h.is_done).length
+  const allDone = habits.length > 0 && doneCount === habits.length
+  const heatmap = buildHeatmap(history)
+  const completeDays = heatmap.filter((d) => d.status === 'complete').length
+  const quote = MOTIVATIONAL_QUOTES[new Date().getDate() % MOTIVATIONAL_QUOTES.length]
+
+  const getColorClasses = (color) => {
+    const colorObj = COLOR_OPTIONS.find((c) => c.value === color) || COLOR_OPTIONS[0]
+    return colorObj
+  }
+
+  return (
+    <Layout>
+      <div className="mx-auto max-w-5xl space-y-6">
+        {/* Header */}
+        <motion.div
+          initial={{ opacity: 0, y: -20 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="flex items-center justify-between"
+        >
+          <div>
+            <h1 className="text-3xl font-bold text-gray-900 flex items-center gap-3">
+              <span className="flex h-12 w-12 items-center justify-center rounded-2xl bg-gradient-to-br from-orange-500 to-pink-500 shadow-lg">
+                <i className="ti ti-flame text-2xl text-white" />
+              </span>
+              Daily Habits
+            </h1>
+            <p className="mt-1 text-gray-600">
+              {streak > 0 ? `🔥 ${streak}-day streak` : 'Start your journey today'}
+              {' · '}
+              {completeDays} of {habits[0]?.repeat_days || 75} days complete
+            </p>
+          </div>
+          <motion.button
+            whileHover={{ scale: 1.05 }}
+            whileTap={{ scale: 0.95 }}
+            onClick={() => setShowAddModal(true)}
+            className="btn btn-primary"
+          >
+            <i className="ti ti-plus text-lg" />
+            Add Habit
+          </motion.button>
+        </motion.div>
+
+        {loading && (
+          <div className="flex justify-center py-20">
+            <div className="spinner" />
+          </div>
+        )}
+
+        {error && !loading && (
+          <motion.div
+            initial={{ opacity: 0, scale: 0.95 }}
+            animate={{ opacity: 1, scale: 1 }}
+            className="card bg-red-50 border-red-200 p-4"
+          >
+            <p className="text-red-600 text-sm">{error}</p>
+            <button onClick={load} className="mt-2 text-red-700 underline text-sm">
+              Retry
+            </button>
+          </motion.div>
+        )}
+
+        {!loading && habits.length === 0 && (
+          <motion.div
+            initial={{ opacity: 0, scale: 0.95 }}
+            animate={{ opacity: 1, scale: 1 }}
+            className="card p-12 text-center"
+          >
+            <div className="mx-auto mb-4 flex h-20 w-20 items-center justify-center rounded-full bg-gradient-to-br from-violet-100 to-purple-100">
+              <i className="ti ti-plus text-4xl text-violet-600" />
+            </div>
+            <h3 className="text-xl font-semibold text-gray-900 mb-2">No habits yet</h3>
+            <p className="text-gray-600 mb-6">Create your first habit to start tracking your progress</p>
+            <button onClick={() => setShowAddModal(true)} className="btn btn-primary">
+              <i className="ti ti-plus" />
+              Create Your First Habit
+            </button>
+          </motion.div>
+        )}
+
+        {!loading && habits.length > 0 && (
+          <>
+            {/* Stats Card */}
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.1 }}
+              className="card p-6"
+            >
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
+                <div>
+                  <p className="text-xs font-semibold uppercase tracking-wider text-gray-500 mb-1">
+                    Today
+                  </p>
+                  <p className={`text-3xl font-bold ${allDone ? 'text-emerald-600' : 'text-gray-900'}`}>
+                    {doneCount}
+                    <span className="text-xl text-gray-400">/{habits.length}</span>
+                  </p>
+                </div>
+                <div>
+                  <p className="text-xs font-semibold uppercase tracking-wider text-gray-500 mb-1">
+                    Streak
+                  </p>
+                  <p className={`text-3xl font-bold ${streak >= 7 ? 'text-orange-600' : 'text-gray-900'}`}>
+                    {streak}
+                    <span className="text-xl text-gray-400"> days</span>
+                  </p>
+                </div>
+                <div>
+                  <p className="text-xs font-semibold uppercase tracking-wider text-gray-500 mb-1">
+                    Complete
+                  </p>
+                  <p className="text-3xl font-bold text-gray-900">
+                    {completeDays}
+                    <span className="text-xl text-gray-400">/{habits[0]?.repeat_days || 75}</span>
+                  </p>
+                </div>
+                <div>
+                  <p className="text-xs font-semibold uppercase tracking-wider text-gray-500 mb-1">
+                    Progress
+                  </p>
+                  <p className="text-3xl font-bold text-violet-600">
+                    {Math.round((completeDays / (habits[0]?.repeat_days || 75)) * 100)}
+                    <span className="text-xl text-gray-400">%</span>
+                  </p>
+                </div>
+              </div>
+
+              {/* Progress Bar */}
+              <div className="mt-6">
+                <div className="progress-bar">
+                  <motion.div
+                    initial={{ width: 0 }}
+                    animate={{ width: `${(doneCount / habits.length) * 100}%` }}
+                    transition={{ duration: 0.8, ease: 'easeOut' }}
+                    className="progress-fill"
+                  />
+                </div>
+                {allDone && (
+                  <motion.p
+                    initial={{ opacity: 0, y: -10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    className="mt-2 text-center text-sm font-medium text-emerald-600"
+                  >
+                    ✨ All habits completed today! You're unstoppable!
+                  </motion.p>
+                )}
+              </div>
+            </motion.div>
+
+            {/* Habits List */}
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.2 }}
+              className="space-y-3"
+            >
+              <AnimatePresence>
+                {habits.map((habit, index) => {
+                  const colorClasses = getColorClasses(habit.color)
+                  const isPending = toggling.has(habit.id)
+
+                  return (
+                    <motion.div
+                      key={habit.id}
+                      initial={{ opacity: 0, x: -20 }}
+                      animate={{ opacity: 1, x: 0 }}
+                      exit={{ opacity: 0, x: 20 }}
+                      transition={{ delay: index * 0.05 }}
+                      className="group"
+                    >
+                      <div
+                        className={`card p-5 transition-all duration-300 ${
+                          habit.is_done
+                            ? `${colorClasses.lightClass} border-${habit.color}-200`
+                            : 'hover:shadow-lg'
+                        } ${isPending ? 'opacity-60' : ''}`}
+                      >
+                        <div className="flex items-center gap-4">
+                          {/* Checkbox */}
+                          <motion.button
+                            whileHover={{ scale: 1.1 }}
+                            whileTap={{ scale: 0.9 }}
+                            onClick={() => handleToggle(habit.id)}
+                            disabled={isPending}
+                            className={`flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-xl transition-all ${
+                              habit.is_done
+                                ? `${colorClasses.class} shadow-lg`
+                                : 'bg-gray-100 hover:bg-gray-200'
+                            }`}
+                          >
+                            {habit.is_done ? (
+                              <i className="ti ti-check text-2xl text-white" />
+                            ) : (
+                              <i className={`ti ${habit.icon} text-2xl text-gray-500`} />
+                            )}
+                          </motion.button>
+
+                          {/* Content */}
+                          <div className="flex-1 min-w-0">
+                            <h3
+                              className={`text-lg font-semibold transition-all ${
+                                habit.is_done
+                                  ? `${colorClasses.textClass} line-through`
+                                  : 'text-gray-900'
+                              }`}
+                            >
+                              {habit.name}
+                            </h3>
+                            {habit.description && (
+                              <p
+                                className={`text-sm mt-0.5 ${
+                                  habit.is_done ? 'text-gray-500' : 'text-gray-600'
+                                }`}
+                              >
+                                {habit.description}
+                              </p>
+                            )}
+                          </div>
+
+                          {/* Delete Button */}
+                          <motion.button
+                            whileHover={{ scale: 1.1 }}
+                            whileTap={{ scale: 0.9 }}
+                            onClick={() => handleDeleteHabit(habit.id)}
+                            className="opacity-0 group-hover:opacity-100 transition-opacity flex h-10 w-10 items-center justify-center rounded-lg bg-red-50 text-red-600 hover:bg-red-100"
+                          >
+                            <i className="ti ti-trash text-lg" />
+                          </motion.button>
+                        </div>
+                      </div>
+                    </motion.div>
+                  )
+                })}
+              </AnimatePresence>
+            </motion.div>
+
+            {/* Heatmap */}
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.3 }}
+              className="card p-6"
+            >
+              <div className="mb-4 flex items-center justify-between">
+                <h3 className="text-lg font-semibold text-gray-900">Your Journey</h3>
+                <div className="flex items-center gap-3 text-xs text-gray-600">
+                  <span className="flex items-center gap-1.5">
+                    <span className="h-3 w-3 rounded bg-emerald-500" />
+                    Complete
+                  </span>
+                  <span className="flex items-center gap-1.5">
+                    <span className="h-3 w-3 rounded bg-amber-400" />
+                    Partial
+                  </span>
+                  <span className="flex items-center gap-1.5">
+                    <span className="h-3 w-3 rounded bg-gray-200" />
+                    Missed
+                  </span>
+                </div>
+              </div>
+
+              <div className="overflow-x-auto pb-2">
+                <div
+                  className="grid gap-1.5 min-w-[500px]"
+                  style={{ gridTemplateColumns: 'repeat(15, minmax(0, 1fr))' }}
+                >
+                  {heatmap.map((cell) => (
+                    <motion.div
+                      key={cell.iso}
+                      initial={{ scale: 0 }}
+                      animate={{ scale: 1 }}
+                      transition={{ delay: cell.day * 0.005 }}
+                      whileHover={{ scale: 1.2, zIndex: 10 }}
+                      title={`Day ${cell.day} · ${cell.label} · ${cell.status} ${
+                        cell.total > 0 ? `(${cell.completed}/${cell.total})` : ''
+                      }`}
+                      className={`aspect-square rounded-lg transition-all cursor-default ${
+                        cell.isToday ? 'ring-2 ring-violet-500 ring-offset-2' : ''
+                      } ${
+                        cell.status === 'complete'
+                          ? 'bg-emerald-500 shadow-md'
+                          : cell.status === 'partial'
+                          ? 'bg-amber-400 shadow-sm'
+                          : cell.status === 'future'
+                          ? 'bg-gray-100 border border-gray-200'
+                          : 'bg-gray-200'
+                      }`}
+                    />
+                  ))}
+                </div>
+              </div>
+
+              <p className="mt-4 text-center text-sm text-gray-600">
+                {completeDays} / {habits[0]?.repeat_days || 75} days complete ·{' '}
+                {(habits[0]?.repeat_days || 75) - completeDays} to go
+              </p>
+            </motion.div>
+
+            {/* Quote */}
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ delay: 0.4 }}
+              className="text-center"
+            >
+              <p className="text-sm italic text-gray-600">"{quote}"</p>
+            </motion.div>
+          </>
+        )}
+      </div>
+
+      {/* Add Habit Modal */}
+      <AnimatePresence>
+        {showAddModal && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4"
+            onClick={() => setShowAddModal(false)}
+          >
+            <motion.div
+              initial={{ scale: 0.9, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.9, opacity: 0 }}
+              onClick={(e) => e.stopPropagation()}
+              className="card w-full max-w-lg p-6"
+            >
+              <div className="mb-6 flex items-center justify-between">
+                <h2 className="text-2xl font-bold text-gray-900">Create New Habit</h2>
+                <button
+                  onClick={() => setShowAddModal(false)}
+                  className="flex h-10 w-10 items-center justify-center rounded-lg hover:bg-gray-100 transition-colors"
+                >
+                  <i className="ti ti-x text-xl text-gray-600" />
+                </button>
+              </div>
+
+              <form onSubmit={handleAddHabit} className="space-y-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Habit Name *
+                  </label>
+                  <input
+                    type="text"
+                    value={newHabit.name}
+                    onChange={(e) => setNewHabit({ ...newHabit, name: e.target.value })}
+                    placeholder="e.g., Morning workout"
+                    className="input"
+                    required
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Description (optional)
+                  </label>
+                  <textarea
+                    value={newHabit.description}
+                    onChange={(e) => setNewHabit({ ...newHabit, description: e.target.value })}
+                    placeholder="e.g., 30 minutes of cardio"
+                    className="input resize-none"
+                    rows="2"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">Icon</label>
+                  <div className="grid grid-cols-5 gap-2">
+                    {ICON_OPTIONS.map((icon) => (
+                      <button
+                        key={icon.value}
+                        type="button"
+                        onClick={() => setNewHabit({ ...newHabit, icon: icon.value })}
+                        className={`flex h-12 items-center justify-center rounded-lg border-2 transition-all ${
+                          newHabit.icon === icon.value
+                            ? 'border-violet-500 bg-violet-50'
+                            : 'border-gray-200 hover:border-gray-300'
+                        }`}
+                      >
+                        <i className={`ti ${icon.value} text-xl`} />
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">Color</label>
+                  <div className="flex gap-2">
+                    {COLOR_OPTIONS.map((color) => (
+                      <button
+                        key={color.value}
+                        type="button"
+                        onClick={() => setNewHabit({ ...newHabit, color: color.value })}
+                        className={`h-10 w-10 rounded-lg ${color.class} transition-all ${
+                          newHabit.color === color.value
+                            ? 'ring-2 ring-offset-2 ring-gray-400 scale-110'
+                            : 'hover:scale-105'
+                        }`}
+                      />
+                    ))}
+                  </div>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Challenge Duration (days)
+                  </label>
+                  <input
+                    type="number"
+                    value={newHabit.repeat_days}
+                    onChange={(e) =>
+                      setNewHabit({ ...newHabit, repeat_days: parseInt(e.target.value) || 75 })
+                    }
+                    min="1"
+                    max="365"
+                    className="input"
+                  />
+                </div>
+
+                <div className="flex gap-3 pt-4">
+                  <button
+                    type="button"
+                    onClick={() => setShowAddModal(false)}
+                    className="btn btn-secondary flex-1"
+                  >
+                    Cancel
+                  </button>
+                  <button type="submit" className="btn btn-primary flex-1">
+                    <i className="ti ti-plus" />
+                    Create Habit
+                  </button>
+                </div>
+              </form>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </Layout>
+  )
+}

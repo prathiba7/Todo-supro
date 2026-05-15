@@ -39,19 +39,19 @@ export default function Register() {
   ]
 
   return (
-    <div className="flex min-h-screen flex-col items-center justify-center bg-slate-950 px-4 py-8 sm:px-6">
+    <div className="flex min-h-screen flex-col items-center justify-center bg-slate-50 px-4 py-8 sm:px-6">
       <div className="w-full max-w-sm">
         <div className="mb-8 text-center sm:mb-10">
-          <h1 className="text-4xl font-bold tracking-tight text-white sm:text-5xl">Supro</h1>
+          <h1 className="text-4xl font-bold tracking-tight text-slate-900 sm:text-5xl">Supro</h1>
           <p className="mt-2 text-sm text-slate-500">Day 1 starts now.</p>
         </div>
 
-        <div className="rounded-2xl border border-slate-800 bg-slate-900 p-5 sm:p-7">
-          <h2 className="mb-1 text-lg font-semibold text-white">Create your account</h2>
+        <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm sm:p-7">
+          <h2 className="mb-1 text-lg font-semibold text-slate-900">Create your account</h2>
           <p className="mb-5 text-sm text-slate-500">Your transformation begins here.</p>
 
           {error && (
-            <div className="mb-4 rounded-xl border border-red-800 bg-red-950 px-4 py-3 text-sm text-red-400">
+            <div className="mb-4 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-600">
               {error}
             </div>
           )}
@@ -59,29 +59,29 @@ export default function Register() {
           <form onSubmit={handleSubmit} className="space-y-4">
             {fields.map(({ name, type, label, placeholder }) => (
               <div key={name}>
-                <label className="mb-1.5 block text-xs font-medium uppercase tracking-widest text-slate-400">
+                <label className="mb-1.5 block text-xs font-medium uppercase tracking-widest text-slate-500">
                   {label}
                 </label>
                 <input
                   name={name} type={type}
                   value={form[name]} onChange={handleChange}
                   required placeholder={placeholder}
-                  className="w-full rounded-xl border border-slate-700 bg-slate-800 px-4 py-3 text-sm text-white placeholder-slate-600 transition-all focus:border-amber-500 focus:outline-none focus:ring-1 focus:ring-amber-500"
+                  className="w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-900 placeholder-slate-400 transition-all focus:border-amber-400 focus:outline-none focus:ring-2 focus:ring-amber-100"
                 />
               </div>
             ))}
 
             <button
               type="submit" disabled={loading}
-              className="w-full rounded-xl bg-amber-500 py-3 text-sm font-semibold text-slate-950 transition-all hover:bg-amber-400 active:scale-[.98] disabled:cursor-not-allowed disabled:opacity-40"
+              className="w-full rounded-xl bg-amber-500 py-3 text-sm font-semibold text-white transition-all hover:bg-amber-600 active:scale-[.98] disabled:cursor-not-allowed disabled:opacity-40"
             >
               {loading ? 'Creating account...' : 'Start my journey →'}
             </button>
           </form>
 
-          <p className="mt-5 text-center text-sm leading-relaxed text-slate-600">
+          <p className="mt-5 text-center text-sm leading-relaxed text-slate-500">
             Already have an account?{' '}
-            <Link to="/login" className="text-amber-400 transition-colors hover:text-amber-300">
+            <Link to="/login" className="text-amber-700 transition-colors hover:text-amber-800">
               Sign in
             </Link>
           </p>
