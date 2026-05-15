@@ -141,7 +141,11 @@ router.delete('/:id', async (req, res) => {
 
 // GET /api/habits/today - Get today's habit logs
 router.get('/today', async (req, res) => {
-  const today = new Date().toISOString().split('T')[0];
+  // Use local date, not UTC
+  const now = new Date();
+  const today = now.getFullYear() + '-' +
+    String(now.getMonth() + 1).padStart(2, '0') + '-' +
+    String(now.getDate()).padStart(2, '0');
 
   try {
     const result = await pool.query(
@@ -167,7 +171,11 @@ router.get('/today', async (req, res) => {
 // POST /api/habits/:id/toggle - Toggle habit completion for today
 router.post('/:id/toggle', async (req, res) => {
   const { id } = req.params;
-  const today = new Date().toISOString().split('T')[0];
+  // Use local date, not UTC
+  const now = new Date();
+  const today = now.getFullYear() + '-' +
+    String(now.getMonth() + 1).padStart(2, '0') + '-' +
+    String(now.getDate()).padStart(2, '0');
 
   try {
     // Check if habit exists and belongs to user
@@ -203,8 +211,8 @@ router.get('/history', async (req, res) => {
 
   try {
     const result = await pool.query(
-      `SELECT 
-         hl.log_date,
+      `SELECT
+         hl.log_date::text as log_date,
          hl.habit_id,
          hl.is_done,
          h.name,

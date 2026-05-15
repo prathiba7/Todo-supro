@@ -48,33 +48,48 @@ const MOTIVATIONAL_QUOTES = [
   "You don't have to be great to start, but you have to start to be great.",
 ]
 
-function buildHeatmap(history, days = 75) {
+function buildHeatmap(history, days = 75, currentHabitsCount = 0) {
+  // Get today's date in local timezone, normalized to midnight
   const today = new Date()
-  today.setHours(12, 0, 0, 0)
-  const todayStr = today.toISOString().split('T')[0]
+  today.setHours(0, 0, 0, 0)
+  
+  // Get today as YYYY-MM-DD string in local timezone
+  const todayStr = today.getFullYear() + '-' +
+    String(today.getMonth() + 1).padStart(2, '0') + '-' +
+    String(today.getDate()).padStart(2, '0')
 
   const dateMap = {}
   history.forEach((log) => {
     const date = log.log_date.split('T')[0]
-    if (!dateMap[date]) dateMap[date] = { total: 0, completed: 0 }
-    dateMap[date].total++
+    if (!dateMap[date]) dateMap[date] = { completed: 0, habitIds: new Set() }
+    dateMap[date].habitIds.add(log.habit_id)
     if (log.is_done) dateMap[date].completed++
   })
 
+  // Build array from TODAY backwards (Day 1 = today, Day 75 = 74 days ago)
   return Array.from({ length: days }, (_, i) => {
     const d = new Date(today)
-    d.setDate(today.getDate() - (days - 1) + i)
-    const iso = d.toISOString().split('T')[0]
+    d.setDate(today.getDate() - i) // Go backwards from today
+    
+    // Get date string in local timezone
+    const iso = d.getFullYear() + '-' +
+      String(d.getMonth() + 1).padStart(2, '0') + '-' +
+      String(d.getDate()).padStart(2, '0')
+    
     const data = dateMap[iso]
     const isFuture = iso > todayStr
+    
+    const dayTotal = data?.habitIds.size || 0
+    const dayCompleted = data?.completed || 0
+    const percentage = dayTotal > 0 ? Math.round((dayCompleted / dayTotal) * 100) : 0
 
     const status = isFuture
       ? 'future'
-      : !data
+      : !data || dayTotal === 0
       ? 'missed'
-      : data.completed === data.total
+      : dayCompleted === dayTotal && dayTotal > 0
       ? 'complete'
-      : data.completed > 0
+      : dayCompleted > 0
       ? 'partial'
       : 'missed'
 
@@ -83,9 +98,10 @@ function buildHeatmap(history, days = 75) {
       isToday: iso === todayStr,
       label: d.toLocaleDateString('en-GB', { day: 'numeric', month: 'short' }),
       status,
-      day: i + 1,
-      completed: data?.completed || 0,
-      total: data?.total || 0,
+      day: i + 1, // Day 1 = today, Day 2 = yesterday, etc.
+      completed: dayCompleted,
+      total: dayTotal,
+      percentage,
     }
   })
 }
@@ -141,8 +157,13 @@ export default function Habits() {
 
     try {
       await toggleHabit(habitId)
-      const s = await getStreak()
+      // Reload streak and history to update heatmap
+      const [s, hist] = await Promise.all([
+        getStreak(),
+        getHabitHistory(75)
+      ])
       setStreak(s.streak)
+      setHistory(hist)
     } catch (err) {
       // Revert on error
       setHabits((prev) =>
@@ -193,9 +214,12 @@ export default function Habits() {
 
   const doneCount = habits.filter((h) => h.is_done).length
   const allDone = habits.length > 0 && doneCount === habits.length
-  const heatmap = buildHeatmap(history)
+  // Use max repeat_days from all habits, or default to 75
+  const maxDays = habits.length > 0 ? Math.max(...habits.map(h => h.repeat_days || 75)) : 75
+  const heatmap = buildHeatmap(history, maxDays, habits.length)
   const completeDays = heatmap.filter((d) => d.status === 'complete').length
   const quote = MOTIVATIONAL_QUOTES[new Date().getDate() % MOTIVATIONAL_QUOTES.length]
+  const todayProgress = habits.length > 0 ? Math.round((doneCount / habits.length) * 100) : 0
 
   const getColorClasses = (color) => {
     const colorObj = COLOR_OPTIONS.find((c) => c.value === color) || COLOR_OPTIONS[0]
@@ -221,7 +245,7 @@ export default function Habits() {
             <p className="mt-1 text-gray-600">
               {streak > 0 ? `🔥 ${streak}-day streak` : 'Start your journey today'}
               {' · '}
-              {completeDays} of {habits[0]?.repeat_days || 75} days complete
+              {completeDays} of {maxDays} days complete
             </p>
           </div>
           <motion.button
@@ -290,6 +314,7 @@ export default function Habits() {
                     {doneCount}
                     <span className="text-xl text-gray-400">/{habits.length}</span>
                   </p>
+                  <p className="text-xs text-gray-500 mt-1">{todayProgress}% complete</p>
                 </div>
                 <div>
                   <p className="text-xs font-semibold uppercase tracking-wider text-gray-500 mb-1">
@@ -306,7 +331,7 @@ export default function Habits() {
                   </p>
                   <p className="text-3xl font-bold text-gray-900">
                     {completeDays}
-                    <span className="text-xl text-gray-400">/{habits[0]?.repeat_days || 75}</span>
+                    <span className="text-xl text-gray-400">/{maxDays}</span>
                   </p>
                 </div>
                 <div>
@@ -314,7 +339,7 @@ export default function Habits() {
                     Progress
                   </p>
                   <p className="text-3xl font-bold text-violet-600">
-                    {Math.round((completeDays / (habits[0]?.repeat_days || 75)) * 100)}
+                    {Math.round((completeDays / maxDays) * 100)}
                     <span className="text-xl text-gray-400">%</span>
                   </p>
                 </div>
@@ -466,10 +491,10 @@ export default function Habits() {
                       animate={{ scale: 1 }}
                       transition={{ delay: cell.day * 0.005 }}
                       whileHover={{ scale: 1.2, zIndex: 10 }}
-                      title={`Day ${cell.day} · ${cell.label} · ${cell.status} ${
-                        cell.total > 0 ? `(${cell.completed}/${cell.total})` : ''
+                      title={`Day ${cell.day} · ${cell.label} · ${cell.status}${
+                        cell.total > 0 ? ` · ${cell.percentage}% (${cell.completed}/${cell.total})` : ''
                       }`}
-                      className={`aspect-square rounded-lg transition-all cursor-default ${
+                      className={`relative aspect-square rounded-lg transition-all cursor-default flex items-center justify-center ${
                         cell.isToday ? 'ring-2 ring-violet-500 ring-offset-2' : ''
                       } ${
                         cell.status === 'complete'
@@ -480,14 +505,24 @@ export default function Habits() {
                           ? 'bg-gray-100 border border-gray-200'
                           : 'bg-gray-200'
                       }`}
-                    />
+                    >
+                      {cell.total > 0 && cell.status !== 'future' && (
+                        <span className={`text-[8px] font-bold ${
+                          cell.status === 'complete' ? 'text-white' :
+                          cell.status === 'partial' ? 'text-white' :
+                          'text-gray-500'
+                        }`}>
+                          {cell.percentage}%
+                        </span>
+                      )}
+                    </motion.div>
                   ))}
                 </div>
               </div>
 
               <p className="mt-4 text-center text-sm text-gray-600">
-                {completeDays} / {habits[0]?.repeat_days || 75} days complete ·{' '}
-                {(habits[0]?.repeat_days || 75) - completeDays} to go
+                {completeDays} / {maxDays} days complete ·{' '}
+                {maxDays - completeDays} to go
               </p>
             </motion.div>
 
