@@ -15,6 +15,7 @@ const PORT = process.env.PORT || 5000
 const allowedOrigins = [
   'http://localhost:5173',
   'http://localhost:4173',       // vite preview
+  'https://todo-supro-web.vercel.app',  // Vercel production
   process.env.FRONTEND_URL,      // set this in Render env vars
 ].filter(Boolean)
 
