@@ -3,10 +3,11 @@ import { AuthProvider }  from './context/AuthContext'
 import ProtectedRoute    from './components/ProtectedRoute'
 import Login             from './pages/auth/Login'
 import Register          from './pages/auth/Register'
-import Dashboard         from './pages/Dashboard'  // ← the new real import
+import Dashboard         from './pages/Dashboard'
 import Tasks             from './pages/Tasks'
 import Goals             from './pages/Goals'
-import Habits from './pages/Habits'
+import Habits            from './pages/Habits'
+import DailyPlanning     from './pages/DailyPlanning'
 
 const Placeholder = ({ name }) => (
   <div style={{ minHeight:'100vh', background:'#020617', display:'flex',
@@ -35,6 +36,9 @@ export default function App() {
           }/>
           <Route path="/habits" element={
             <ProtectedRoute><Habits /></ProtectedRoute>
+          }/>
+          <Route path="/daily-planning" element={
+            <ProtectedRoute><DailyPlanning /></ProtectedRoute>
           }/>
 
           <Route path="/"  element={<Navigate to="/dashboard" replace />} />

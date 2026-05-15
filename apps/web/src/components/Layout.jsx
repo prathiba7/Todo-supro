@@ -4,6 +4,7 @@ import { motion } from 'framer-motion'
 
 const navItems = [
   { path: '/dashboard', icon: 'ti-layout-dashboard', label: 'Dashboard' },
+  { path: '/daily-planning', icon: 'ti-calendar-event', label: 'Daily Plan' },
   { path: '/tasks', icon: 'ti-checkbox', label: 'Tasks' },
   { path: '/goals', icon: 'ti-target', label: 'Goals' },
   { path: '/habits', icon: 'ti-flame', label: 'Habits' },
@@ -102,7 +103,7 @@ export default function Layout({ children }) {
         animate={{ y: 0, opacity: 1 }}
         className="md:hidden fixed bottom-0 left-0 right-0 z-50 glass-effect border-t border-white/20 shadow-xl"
       >
-        <div className="grid grid-cols-4 gap-1 p-2">
+        <div className="grid grid-cols-5 gap-1 p-2">
           {navItems.map((item) => {
             const isActive = location.pathname === item.path
             return (

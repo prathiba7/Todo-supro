@@ -58,8 +58,39 @@ CREATE TABLE IF NOT EXISTS habit_logs (
   UNIQUE(user_id, habit_id, log_date)
 );
 
+-- Daily plans table for morning routine and evening review
+CREATE TABLE IF NOT EXISTS daily_plans (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  user_id UUID REFERENCES users(id) ON DELETE CASCADE,
+  plan_date DATE NOT NULL,
+  
+  -- Morning Planning
+  priority_1 TEXT,
+  priority_2 TEXT,
+  priority_3 TEXT,
+  morning_notes TEXT,
+  morning_mood VARCHAR(20),
+  morning_energy INT CHECK (morning_energy >= 1 AND morning_energy <= 5),
+  morning_completed_at TIMESTAMPTZ,
+  
+  -- Evening Review
+  evening_notes TEXT,
+  evening_mood VARCHAR(20),
+  evening_energy INT CHECK (evening_energy >= 1 AND evening_energy <= 5),
+  day_rating INT CHECK (day_rating >= 1 AND day_rating <= 5),
+  wins TEXT,
+  improvements TEXT,
+  gratitude TEXT,
+  evening_completed_at TIMESTAMPTZ,
+  
+  created_at TIMESTAMPTZ DEFAULT NOW(),
+  updated_at TIMESTAMPTZ DEFAULT NOW(),
+  UNIQUE(user_id, plan_date)
+);
+
 -- Index for faster queries
 CREATE INDEX IF NOT EXISTS idx_habit_logs_user_date ON habit_logs(user_id, log_date);
 CREATE INDEX IF NOT EXISTS idx_habits_user ON habits(user_id, is_active);
+CREATE INDEX IF NOT EXISTS idx_daily_plans_user_date ON daily_plans(user_id, plan_date);
 
 -- Made with Bob
