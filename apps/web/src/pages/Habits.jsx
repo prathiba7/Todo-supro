@@ -546,7 +546,7 @@ export default function Habits() {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4"
+            className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4 overflow-y-auto"
             onClick={() => setShowAddModal(false)}
           >
             <motion.div
@@ -554,7 +554,7 @@ export default function Habits() {
               animate={{ scale: 1, opacity: 1 }}
               exit={{ scale: 0.9, opacity: 0 }}
               onClick={(e) => e.stopPropagation()}
-              className="card w-full max-w-lg p-6"
+              className="card w-full max-w-lg p-6 my-8 max-h-[90vh] overflow-y-auto"
             >
               <div className="mb-6 flex items-center justify-between">
                 <h2 className="text-2xl font-bold text-gray-900">Create New Habit</h2>

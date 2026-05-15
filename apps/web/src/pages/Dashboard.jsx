@@ -5,7 +5,7 @@ import { useAuth } from '../context/AuthContext'
 import Layout from '../components/Layout'
 import { getTasks, createTask, toggleTask, deleteTask } from '../api/tasks'
 import { getGoals } from '../api/goals'
-import { getTodayHabits, getStreak } from '../api/habits'
+import { getTodayHabits, getStreak, toggleHabit } from '../api/habits'
 
 const QUOTES = [
   "We are what we repeatedly do. Excellence is not an act, but a habit.",
@@ -31,6 +31,7 @@ export default function Dashboard() {
   const [adding, setAdding] = useState(false)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
+  const [togglingHabit, setTogglingHabit] = useState(new Set())
 
   const quote = QUOTES[new Date().getDate() % QUOTES.length]
 
@@ -89,6 +90,35 @@ export default function Dashboard() {
     try {
       await deleteTask(id)
     } catch {}
+  }
+
+  const handleToggleHabit = async (habitId) => {
+    if (togglingHabit.has(habitId)) return
+    setTogglingHabit((p) => new Set([...p, habitId]))
+
+    // Optimistic update
+    setHabits((prev) =>
+      prev.map((h) => (h.id === habitId ? { ...h, is_done: !h.is_done } : h))
+    )
+
+    try {
+      await toggleHabit(habitId)
+      // Reload streak after toggling
+      const s = await getStreak()
+      setStreak(s.streak)
+    } catch (err) {
+      // Revert on error
+      setHabits((prev) =>
+        prev.map((h) => (h.id === habitId ? { ...h, is_done: !h.is_done } : h))
+      )
+      console.error(err)
+    } finally {
+      setTogglingHabit((p) => {
+        const n = new Set(p)
+        n.delete(habitId)
+        return n
+      })
+    }
   }
 
   const todoTasks = tasks.filter((t) => !t.is_done)
@@ -298,33 +328,40 @@ export default function Dashboard() {
                 <EmptyState icon="ti-flame" text="No habits yet" subtext="Create your first habit!" />
               ) : (
                 <div className="mt-3 space-y-2">
-                  {habits.slice(0, 5).map((habit, index) => (
-                    <motion.div
-                      key={habit.id}
-                      initial={{ opacity: 0, x: 20 }}
-                      animate={{ opacity: 1, x: 0 }}
-                      transition={{ delay: index * 0.05 }}
-                      className={`flex items-center gap-3 rounded-xl border px-3 py-2.5 transition-all ${
-                        habit.is_done
-                          ? 'border-emerald-200 bg-emerald-50'
-                          : 'border-gray-200 bg-white'
-                      }`}
-                    >
-                      <i
-                        className={`ti ${habit.icon} text-sm ${
-                          habit.is_done ? 'text-emerald-600' : 'text-gray-400'
-                        }`}
-                      />
-                      <span
-                        className={`flex-1 text-sm ${
-                          habit.is_done ? 'text-emerald-700 line-through' : 'text-gray-700'
-                        }`}
+                  {habits.slice(0, 5).map((habit, index) => {
+                    const isPending = togglingHabit.has(habit.id)
+                    return (
+                      <motion.button
+                        key={habit.id}
+                        initial={{ opacity: 0, x: 20 }}
+                        animate={{ opacity: 1, x: 0 }}
+                        transition={{ delay: index * 0.05 }}
+                        whileHover={{ scale: 1.02 }}
+                        whileTap={{ scale: 0.98 }}
+                        onClick={() => handleToggleHabit(habit.id)}
+                        disabled={isPending}
+                        className={`w-full flex items-center gap-3 rounded-xl border px-3 py-2.5 transition-all ${
+                          habit.is_done
+                            ? 'border-emerald-200 bg-emerald-50'
+                            : 'border-gray-200 bg-white hover:border-violet-300 hover:shadow-sm'
+                        } ${isPending ? 'opacity-60 cursor-wait' : 'cursor-pointer'}`}
                       >
-                        {habit.name}
-                      </span>
-                      {habit.is_done && <i className="ti ti-check text-xs text-emerald-600" />}
-                    </motion.div>
-                  ))}
+                        <i
+                          className={`ti ${habit.icon} text-sm ${
+                            habit.is_done ? 'text-emerald-600' : 'text-gray-400'
+                          }`}
+                        />
+                        <span
+                          className={`flex-1 text-sm text-left ${
+                            habit.is_done ? 'text-emerald-700 line-through' : 'text-gray-700'
+                          }`}
+                        >
+                          {habit.name}
+                        </span>
+                        {habit.is_done && <i className="ti ti-check text-xs text-emerald-600" />}
+                      </motion.button>
+                    )
+                  })}
                 </div>
               )}
             </div>
