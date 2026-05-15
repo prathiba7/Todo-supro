@@ -179,30 +179,27 @@ export default function Tasks() {
 
   return (
     <Layout>
-      <div className="max-w-3xl mx-auto px-8 py-8">
-
-        {/* Page header */}
-        <div className="flex items-start justify-between mb-6">
+      <div className="mx-auto max-w-3xl px-4 py-5 sm:px-6 sm:py-6 lg:px-8 lg:py-8">
+        <div className="mb-6 flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
           <div>
-            <h2 className="text-2xl font-bold text-white">Tasks</h2>
-            <p className="text-slate-500 text-sm mt-0.5">
+            <h2 className="text-2xl font-bold text-white sm:text-3xl">Tasks</h2>
+            <p className="mt-0.5 text-sm text-slate-500">
               {tasks.length} total · {tasks.filter((t) => t.is_done).length} done
             </p>
           </div>
           <button
             onClick={() => { setShowForm((v) => !v); setNewTask(EMPTY_FORM) }}
-            className="flex items-center gap-2 bg-amber-500 hover:bg-amber-400 active:scale-[.98] text-slate-950 font-semibold px-4 py-2.5 rounded-xl text-sm transition-all"
+            className="flex w-full items-center justify-center gap-2 rounded-xl bg-amber-500 px-4 py-2.5 text-sm font-semibold text-slate-950 transition-all hover:bg-amber-400 active:scale-[.98] sm:w-auto"
           >
             <i className="ti ti-plus" aria-hidden="true" />
             New task
           </button>
         </div>
 
-        {/* Date navigation */}
-        <div className="flex items-center gap-2 mb-5">
+        <div className="mb-5 flex flex-wrap items-center gap-2 sm:flex-nowrap">
           <button
             onClick={() => shiftDate(-1)}
-            className="w-9 h-9 flex items-center justify-center rounded-xl bg-slate-900 border border-slate-800 text-slate-400 hover:text-white hover:border-slate-700 transition-all"
+            className="flex h-10 w-10 items-center justify-center rounded-xl border border-slate-800 bg-slate-900 text-slate-400 transition-all hover:border-slate-700 hover:text-white"
             aria-label="Previous day"
           >
             <i className="ti ti-chevron-left text-sm" aria-hidden="true" />
@@ -210,10 +207,10 @@ export default function Tasks() {
 
           <button
             onClick={() => { setDate(toDateStr(new Date())); setFilter('all') }}
-            className={`flex-1 text-center py-2 rounded-xl border text-sm font-medium transition-all ${
+            className={`min-w-0 flex-1 rounded-xl border px-4 py-2 text-center text-sm font-medium transition-all ${
               isToday
-                ? 'bg-amber-500/10 border-amber-800/50 text-amber-400'
-                : 'bg-slate-900 border-slate-800 text-white hover:border-slate-700'
+                ? 'border-amber-800/50 bg-amber-500/10 text-amber-400'
+                : 'border-slate-800 bg-slate-900 text-white hover:border-slate-700'
             }`}
           >
             {displayDate(date)}
@@ -221,7 +218,7 @@ export default function Tasks() {
 
           <button
             onClick={() => shiftDate(1)}
-            className="w-9 h-9 flex items-center justify-center rounded-xl bg-slate-900 border border-slate-800 text-slate-400 hover:text-white hover:border-slate-700 transition-all"
+            className="flex h-10 w-10 items-center justify-center rounded-xl border border-slate-800 bg-slate-900 text-slate-400 transition-all hover:border-slate-700 hover:text-white"
             aria-label="Next day"
           >
             <i className="ti ti-chevron-right text-sm" aria-hidden="true" />
@@ -230,15 +227,14 @@ export default function Tasks() {
           {!isToday && (
             <button
               onClick={() => { setDate(toDateStr(new Date())); setFilter('all') }}
-              className="text-xs text-amber-400 hover:text-amber-300 transition-colors whitespace-nowrap pl-1"
+              className="w-full pl-1 text-left text-xs text-amber-400 transition-colors hover:text-amber-300 sm:w-auto sm:whitespace-nowrap"
             >
               ↩ Today
             </button>
           )}
         </div>
 
-        {/* Category filter pills */}
-        <div className="flex gap-2 mb-5 flex-wrap">
+        <div className="mb-5 flex flex-wrap gap-2">
           {CATEGORIES.map(({ value, label }) => {
             const count = value === 'all'
               ? tasks.length
@@ -247,10 +243,10 @@ export default function Tasks() {
               <button
                 key={value}
                 onClick={() => setFilter(value)}
-                className={`px-3 py-1.5 rounded-lg text-xs font-medium border transition-all ${
+                className={`rounded-lg border px-3 py-1.5 text-xs font-medium transition-all ${
                   filter === value
-                    ? 'bg-amber-500/15 text-amber-400 border-amber-800/50'
-                    : 'bg-slate-900 text-slate-500 border-slate-800 hover:text-slate-300 hover:border-slate-700'
+                    ? 'border-amber-800/50 bg-amber-500/15 text-amber-400'
+                    : 'border-slate-800 bg-slate-900 text-slate-500 hover:border-slate-700 hover:text-slate-300'
                 }`}
               >
                 {label}
@@ -262,11 +258,10 @@ export default function Tasks() {
           })}
         </div>
 
-        {/* Add task form */}
         {showForm && (
           <form
             onSubmit={handleAdd}
-            className="bg-slate-900 border border-amber-800/30 rounded-xl p-4 mb-5 space-y-3"
+            className="mb-5 space-y-3 rounded-xl border border-amber-800/30 bg-slate-900 p-4"
           >
             <input
               value={newTask.title}
@@ -275,22 +270,22 @@ export default function Tasks() {
               placeholder="What needs to be done?"
               autoFocus
               required
-              className="w-full bg-slate-800 border border-slate-700 rounded-xl px-4 py-2.5 text-sm text-white placeholder-slate-600 focus:outline-none focus:border-amber-500 focus:ring-1 focus:ring-amber-500 transition-all"
+              className="w-full rounded-xl border border-slate-700 bg-slate-800 px-4 py-2.5 text-sm text-white placeholder-slate-600 transition-all focus:border-amber-500 focus:outline-none focus:ring-1 focus:ring-amber-500"
             />
-            <div className="flex gap-3">
-              <div className="flex items-center gap-2 bg-slate-800 border border-slate-700 rounded-xl px-3 py-2">
-                <i className="ti ti-clock text-slate-500 text-sm" aria-hidden="true" />
+            <div className="flex flex-col gap-3 sm:flex-row">
+              <div className="flex items-center gap-2 rounded-xl border border-slate-700 bg-slate-800 px-3 py-2">
+                <i className="ti ti-clock text-sm text-slate-500" aria-hidden="true" />
                 <input
                   type="time"
                   value={newTask.scheduled_time}
                   onChange={(e) => setNewTask((p) => ({ ...p, scheduled_time: e.target.value }))}
-                  className="bg-transparent text-sm text-slate-300 outline-none w-[90px]"
+                  className="w-full bg-transparent text-sm text-slate-300 outline-none sm:w-[90px]"
                 />
               </div>
               <select
                 value={newTask.category}
                 onChange={(e) => setNewTask((p) => ({ ...p, category: e.target.value }))}
-                className="flex-1 bg-slate-800 border border-slate-700 rounded-xl px-3 py-2 text-sm text-slate-300 focus:outline-none focus:border-amber-500 transition-all"
+                className="flex-1 rounded-xl border border-slate-700 bg-slate-800 px-3 py-2 text-sm text-slate-300 transition-all focus:border-amber-500 focus:outline-none"
               >
                 <option value="personal">Personal</option>
                 <option value="work">Work</option>
@@ -298,18 +293,18 @@ export default function Tasks() {
                 <option value="75hard">75 Hard</option>
               </select>
             </div>
-            <div className="flex gap-2 justify-end pt-1">
+            <div className="flex flex-col-reverse gap-2 pt-1 sm:flex-row sm:justify-end">
               <button
                 type="button"
                 onClick={() => { setShowForm(false); setNewTask(EMPTY_FORM) }}
-                className="px-4 py-2 text-sm text-slate-500 hover:text-white border border-slate-800 hover:border-slate-700 rounded-xl transition-all"
+                className="rounded-xl border border-slate-800 px-4 py-2 text-sm text-slate-500 transition-all hover:border-slate-700 hover:text-white"
               >
                 Cancel
               </button>
               <button
                 type="submit"
                 disabled={adding || !newTask.title.trim()}
-                className="px-4 py-2 text-sm font-semibold bg-amber-500 hover:bg-amber-400 text-slate-950 rounded-xl transition-all disabled:opacity-40"
+                className="rounded-xl bg-amber-500 px-4 py-2 text-sm font-semibold text-slate-950 transition-all hover:bg-amber-400 disabled:opacity-40"
               >
                 {adding ? 'Adding...' : 'Add task'}
               </button>
@@ -423,71 +418,72 @@ export default function Tasks() {
 function TaskRow({ task, onToggle, onEdit, onDelete, catColors }) {
   return (
     <div
-      className={`group flex items-center gap-3 px-4 py-3 rounded-xl border transition-all ${
+      className={`group rounded-xl border px-4 py-3 transition-all ${
         task.is_done
-          ? 'bg-slate-900/40 border-slate-800/40 opacity-55'
-          : 'bg-slate-900 border-slate-800 hover:border-slate-700'
+          ? 'border-slate-800/40 bg-slate-900/40 opacity-55'
+          : 'border-slate-800 bg-slate-900 hover:border-slate-700'
       }`}
     >
-      {/* Checkbox */}
-      <button
-        onClick={() => onToggle(task.id)}
-        className={`w-5 h-5 rounded-full border-2 flex items-center justify-center flex-shrink-0 transition-all ${
-          task.is_done
-            ? 'bg-emerald-500 border-emerald-500'
-            : 'border-slate-600 hover:border-amber-500'
-        }`}
-        aria-label={task.is_done ? 'Mark incomplete' : 'Mark complete'}
-      >
-        {task.is_done && (
-          <i className="ti ti-check text-xs text-white" aria-hidden="true" />
-        )}
-      </button>
-
-      {/* Title */}
-      <span
-        className={`flex-1 text-sm ${
-          task.is_done ? 'line-through text-slate-500' : 'text-slate-200'
-        }`}
-      >
-        {task.title}
-      </span>
-
-      {/* Time badge */}
-      {task.scheduled_time && (
-        <span className="flex items-center gap-1 text-xs text-slate-600 font-mono flex-shrink-0">
-          <i className="ti ti-clock text-xs" aria-hidden="true" />
-          {task.scheduled_time.slice(0, 5)}
-        </span>
-      )}
-
-      {/* Category badge */}
-      {task.category && task.category !== 'personal' && (
-        <span
-          className={`text-xs px-2 py-0.5 rounded-md border font-medium flex-shrink-0 ${
-            catColors[task.category] || catColors.personal
+      <div className="flex items-start gap-3">
+        <button
+          onClick={() => onToggle(task.id)}
+          className={`mt-0.5 flex h-5 w-5 flex-shrink-0 items-center justify-center rounded-full border-2 transition-all ${
+            task.is_done
+              ? 'border-emerald-500 bg-emerald-500'
+              : 'border-slate-600 hover:border-amber-500'
           }`}
+          aria-label={task.is_done ? 'Mark incomplete' : 'Mark complete'}
         >
-          {task.category}
-        </span>
-      )}
+          {task.is_done && (
+            <i className="ti ti-check text-xs text-white" aria-hidden="true" />
+          )}
+        </button>
 
-      {/* Hover actions */}
-      <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-all flex-shrink-0">
-        <button
-          onClick={() => onEdit(task)}
-          className="w-7 h-7 flex items-center justify-center rounded-lg text-slate-600 hover:text-white hover:bg-slate-800 transition-all"
-          aria-label="Edit task"
-        >
-          <i className="ti ti-pencil text-sm" aria-hidden="true" />
-        </button>
-        <button
-          onClick={() => onDelete(task.id)}
-          className="w-7 h-7 flex items-center justify-center rounded-lg text-slate-600 hover:text-red-400 hover:bg-red-950/30 transition-all"
-          aria-label="Delete task"
-        >
-          <i className="ti ti-trash text-sm" aria-hidden="true" />
-        </button>
+        <div className="min-w-0 flex-1">
+          <span
+            className={`block break-words text-sm leading-relaxed ${
+              task.is_done ? 'text-slate-500 line-through' : 'text-slate-200'
+            }`}
+          >
+            {task.title}
+          </span>
+
+          <div className="mt-2 flex flex-wrap items-center gap-2">
+            {task.scheduled_time && (
+              <span className="flex flex-shrink-0 items-center gap-1 text-xs font-mono text-slate-600">
+                <i className="ti ti-clock text-xs" aria-hidden="true" />
+                {task.scheduled_time.slice(0, 5)}
+              </span>
+            )}
+
+            {task.category && task.category !== 'personal' && (
+              <span
+                className={`rounded-md border px-2 py-0.5 text-xs font-medium ${
+                  catColors[task.category] || catColors.personal
+                }`}
+              >
+                {task.category}
+              </span>
+            )}
+          </div>
+        </div>
+
+        <div className="ml-2 flex flex-col items-center gap-1 self-stretch sm:ml-0 sm:flex-row sm:self-start sm:opacity-0 sm:transition-all sm:group-hover:opacity-100">
+          <button
+            onClick={() => onEdit(task)}
+            className="flex h-8 w-8 items-center justify-center rounded-lg text-slate-600 transition-all hover:bg-slate-800 hover:text-white"
+            aria-label="Edit task"
+          >
+            <i className="ti ti-pencil text-sm" aria-hidden="true" />
+          </button>
+          <button
+            onClick={() => onDelete(task.id)}
+            className="flex h-8 w-8 items-center justify-center rounded-lg text-slate-600 transition-all hover:bg-red-950/30 hover:text-red-400"
+            aria-label="Delete task"
+          >
+            <i className="ti ti-trash text-sm" aria-hidden="true" />
+          </button>
+        </div>
       </div>
     </div>
   )
@@ -497,7 +493,7 @@ function EditRow({ form, setForm, onSave, onCancel }) {
   return (
     <form
       onSubmit={onSave}
-      className="bg-slate-900 border border-amber-800/40 rounded-xl p-3 space-y-2.5"
+      className="space-y-2.5 rounded-xl border border-amber-800/40 bg-slate-900 p-3"
     >
       <input
         value={form.title}
@@ -505,22 +501,22 @@ function EditRow({ form, setForm, onSave, onCancel }) {
         onKeyDown={(e) => { if (e.key === 'Escape') onCancel() }}
         autoFocus
         required
-        className="w-full bg-slate-800 border border-slate-700 rounded-lg px-3 py-2 text-sm text-white placeholder-slate-600 focus:outline-none focus:border-amber-500 focus:ring-1 focus:ring-amber-500 transition-all"
+        className="w-full rounded-lg border border-slate-700 bg-slate-800 px-3 py-2 text-sm text-white placeholder-slate-600 transition-all focus:border-amber-500 focus:outline-none focus:ring-1 focus:ring-amber-500"
       />
-      <div className="flex gap-2">
-        <div className="flex items-center gap-2 bg-slate-800 border border-slate-700 rounded-lg px-3 py-2">
-          <i className="ti ti-clock text-slate-500 text-sm" aria-hidden="true" />
+      <div className="flex flex-col gap-2 sm:flex-row">
+        <div className="flex items-center gap-2 rounded-lg border border-slate-700 bg-slate-800 px-3 py-2">
+          <i className="ti ti-clock text-sm text-slate-500" aria-hidden="true" />
           <input
             type="time"
             value={form.scheduled_time}
             onChange={(e) => setForm((p) => ({ ...p, scheduled_time: e.target.value }))}
-            className="bg-transparent text-sm text-slate-300 outline-none w-[90px]"
+            className="w-full bg-transparent text-sm text-slate-300 outline-none sm:w-[90px]"
           />
         </div>
         <select
           value={form.category}
           onChange={(e) => setForm((p) => ({ ...p, category: e.target.value }))}
-          className="flex-1 bg-slate-800 border border-slate-700 rounded-lg px-3 py-2 text-sm text-slate-300 focus:outline-none focus:border-amber-500 transition-all"
+          className="flex-1 rounded-lg border border-slate-700 bg-slate-800 px-3 py-2 text-sm text-slate-300 transition-all focus:border-amber-500 focus:outline-none"
         >
           <option value="personal">Personal</option>
           <option value="work">Work</option>
@@ -529,14 +525,14 @@ function EditRow({ form, setForm, onSave, onCancel }) {
         </select>
         <button
           type="submit"
-          className="px-4 py-2 text-xs font-semibold bg-amber-500 hover:bg-amber-400 text-slate-950 rounded-lg transition-all"
+          className="rounded-lg bg-amber-500 px-4 py-2 text-xs font-semibold text-slate-950 transition-all hover:bg-amber-400"
         >
           Save
         </button>
         <button
           type="button"
           onClick={onCancel}
-          className="px-4 py-2 text-xs text-slate-500 hover:text-white border border-slate-800 hover:border-slate-700 rounded-lg transition-all"
+          className="rounded-lg border border-slate-800 px-4 py-2 text-xs text-slate-500 transition-all hover:border-slate-700 hover:text-white"
         >
           Cancel
         </button>

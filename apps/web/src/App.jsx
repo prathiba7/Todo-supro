@@ -24,18 +24,17 @@ export default function App() {
           <Route path="/login"    element={<Login />} />
           <Route path="/register" element={<Register />} />
 
-          {/* Dashboard is now the real component */}
           <Route path="/dashboard" element={
             <ProtectedRoute><Dashboard /></ProtectedRoute>
           }/>
           <Route path="/tasks" element={
-            <ProtectedRoute><Tasks/><Placeholder name="Tasks" /></ProtectedRoute>
+            <ProtectedRoute><Tasks /></ProtectedRoute>
           }/>
           <Route path="/goals" element={
-            <ProtectedRoute><Goals/><Placeholder name="Goals" /></ProtectedRoute>
+            <ProtectedRoute><Goals /></ProtectedRoute>
           }/>
           <Route path="/75hard" element={
-            <ProtectedRoute><Hard75/><Placeholder name="75 Hard Tracker" /></ProtectedRoute>
+            <ProtectedRoute><Hard75 /></ProtectedRoute>
           }/>
 
           <Route path="/"  element={<Navigate to="/dashboard" replace />} />

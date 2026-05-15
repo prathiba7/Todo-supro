@@ -157,13 +157,11 @@ export default function Goals() {
 
   return (
     <Layout>
-      <div className="max-w-3xl mx-auto px-8 py-8">
-
-        {/* Header */}
-        <div className="flex items-start justify-between mb-6">
+      <div className="mx-auto max-w-3xl px-4 py-5 sm:px-6 sm:py-6 lg:px-8 lg:py-8">
+        <div className="mb-6 flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
           <div>
-            <h2 className="text-2xl font-bold text-white">Goals</h2>
-            <p className="text-slate-500 text-sm mt-0.5">
+            <h2 className="text-2xl font-bold text-white sm:text-3xl">Goals</h2>
+            <p className="mt-0.5 text-sm text-slate-500">
               {active.length} active
               {completed.length > 0 && ` · ${completed.length} completed`}
               {overdue.length > 0 && (
@@ -173,18 +171,17 @@ export default function Goals() {
           </div>
           <button
             onClick={() => { setShowForm((v) => !v); setNewGoal(EMPTY_FORM) }}
-            className="flex items-center gap-2 bg-amber-500 hover:bg-amber-400 active:scale-[.98] text-slate-950 font-semibold px-4 py-2.5 rounded-xl text-sm transition-all"
+            className="flex w-full items-center justify-center gap-2 rounded-xl bg-amber-500 px-4 py-2.5 text-sm font-semibold text-slate-950 transition-all hover:bg-amber-400 active:scale-[.98] sm:w-auto"
           >
             <i className="ti ti-plus" aria-hidden="true" />
             New goal
           </button>
         </div>
 
-        {/* Add form */}
         {showForm && (
           <form
             onSubmit={handleAdd}
-            className="bg-slate-900 border border-amber-800/30 rounded-xl p-5 mb-6 space-y-3"
+            className="mb-6 space-y-3 rounded-xl border border-amber-800/30 bg-slate-900 p-4 sm:p-5"
           >
             <input
               value={newGoal.title}
@@ -195,36 +192,36 @@ export default function Goals() {
               placeholder="What do you want to achieve?"
               autoFocus
               required
-              className="w-full bg-slate-800 border border-slate-700 rounded-xl px-4 py-2.5 text-sm text-white placeholder-slate-600 focus:outline-none focus:border-amber-500 focus:ring-1 focus:ring-amber-500 transition-all"
+              className="w-full rounded-xl border border-slate-700 bg-slate-800 px-4 py-2.5 text-sm text-white placeholder-slate-600 transition-all focus:border-amber-500 focus:outline-none focus:ring-1 focus:ring-amber-500"
             />
             <textarea
               value={newGoal.description}
               onChange={(e) => setNewGoal((p) => ({ ...p, description: e.target.value }))}
               placeholder="Why does this matter? (optional)"
-              rows={2}
-              className="w-full bg-slate-800 border border-slate-700 rounded-xl px-4 py-2.5 text-sm text-white placeholder-slate-600 focus:outline-none focus:border-amber-500 focus:ring-1 focus:ring-amber-500 transition-all resize-none"
+              rows={3}
+              className="w-full resize-none rounded-xl border border-slate-700 bg-slate-800 px-4 py-2.5 text-sm text-white placeholder-slate-600 transition-all focus:border-amber-500 focus:outline-none focus:ring-1 focus:ring-amber-500"
             />
-            <div className="flex items-center gap-2 bg-slate-800 border border-slate-700 rounded-xl px-3 py-2.5">
-              <i className="ti ti-calendar text-slate-500 text-sm" aria-hidden="true" />
+            <div className="flex items-center gap-2 rounded-xl border border-slate-700 bg-slate-800 px-3 py-2.5">
+              <i className="ti ti-calendar text-sm text-slate-500" aria-hidden="true" />
               <input
                 type="date"
                 value={newGoal.target_date}
                 onChange={(e) => setNewGoal((p) => ({ ...p, target_date: e.target.value }))}
-                className="bg-transparent text-sm text-slate-300 outline-none flex-1"
+                className="min-w-0 flex-1 bg-transparent text-sm text-slate-300 outline-none"
               />
             </div>
-            <div className="flex gap-2 justify-end pt-1">
+            <div className="flex flex-col-reverse gap-2 pt-1 sm:flex-row sm:justify-end">
               <button
                 type="button"
                 onClick={() => { setShowForm(false); setNewGoal(EMPTY_FORM) }}
-                className="px-4 py-2 text-sm text-slate-500 hover:text-white border border-slate-800 hover:border-slate-700 rounded-xl transition-all"
+                className="rounded-xl border border-slate-800 px-4 py-2 text-sm text-slate-500 transition-all hover:border-slate-700 hover:text-white"
               >
                 Cancel
               </button>
               <button
                 type="submit"
                 disabled={adding || !newGoal.title.trim()}
-                className="px-4 py-2 text-sm font-semibold bg-amber-500 hover:bg-amber-400 text-slate-950 rounded-xl transition-all disabled:opacity-40"
+                className="rounded-xl bg-amber-500 px-4 py-2 text-sm font-semibold text-slate-950 transition-all hover:bg-amber-400 disabled:opacity-40"
               >
                 {adding ? 'Creating...' : 'Create goal'}
               </button>
@@ -359,7 +356,7 @@ function GoalCard({
 
   return (
     <div
-      className={`group bg-slate-900 rounded-xl p-5 border transition-all ${
+      className={`group rounded-xl border bg-slate-900 p-4 sm:p-5 transition-all ${
         complete
           ? 'border-emerald-900/50'
           : days !== null && days < 0
@@ -367,22 +364,21 @@ function GoalCard({
           : 'border-slate-800 hover:border-slate-700'
       }`}
     >
-      {/* Top row: title + actions */}
-      <div className="flex items-start gap-3 mb-4">
-        <div className="flex-1 min-w-0">
-          <div className="flex items-center gap-2 flex-wrap mb-1">
+      <div className="mb-4 flex items-start gap-3">
+        <div className="min-w-0 flex-1">
+          <div className="mb-1 flex flex-wrap items-center gap-2">
             {complete && (
-              <span className="text-xs px-2 py-0.5 rounded-md bg-emerald-950 text-emerald-400 border border-emerald-900 font-medium flex-shrink-0">
+              <span className="flex-shrink-0 rounded-md border border-emerald-900 bg-emerald-950 px-2 py-0.5 text-xs font-medium text-emerald-400">
                 Complete
               </span>
             )}
             {!complete && days !== null && days < 0 && (
-              <span className="text-xs px-2 py-0.5 rounded-md bg-red-950 text-red-400 border border-red-900 font-medium flex-shrink-0">
+              <span className="flex-shrink-0 rounded-md border border-red-900 bg-red-950 px-2 py-0.5 text-xs font-medium text-red-400">
                 Overdue
               </span>
             )}
             <h3
-              className={`text-sm font-semibold leading-snug ${
+              className={`break-words text-sm font-semibold leading-snug ${
                 complete ? 'text-slate-400 line-through' : 'text-white'
               }`}
             >
@@ -390,22 +386,21 @@ function GoalCard({
             </h3>
           </div>
           {goal.description && (
-            <p className="text-xs text-slate-600 leading-relaxed mt-1">{goal.description}</p>
+            <p className="mt-1 break-words text-xs leading-relaxed text-slate-600">{goal.description}</p>
           )}
         </div>
 
-        {/* Edit / delete (hover) */}
-        <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-all flex-shrink-0">
+        <div className="ml-2 flex flex-col items-center gap-1 self-stretch sm:ml-0 sm:flex-row sm:self-start sm:opacity-0 sm:transition-all sm:group-hover:opacity-100">
           <button
             onClick={() => onEdit(goal)}
-            className="w-7 h-7 flex items-center justify-center rounded-lg text-slate-600 hover:text-white hover:bg-slate-800 transition-all"
+            className="flex h-8 w-8 items-center justify-center rounded-lg text-slate-600 transition-all hover:bg-slate-800 hover:text-white"
             aria-label="Edit goal"
           >
             <i className="ti ti-pencil text-sm" aria-hidden="true" />
           </button>
           <button
             onClick={() => onDelete(goal.id)}
-            className="w-7 h-7 flex items-center justify-center rounded-lg text-slate-600 hover:text-red-400 hover:bg-red-950/30 transition-all"
+            className="flex h-8 w-8 items-center justify-center rounded-lg text-slate-600 transition-all hover:bg-red-950/30 hover:text-red-400"
             aria-label="Delete goal"
           >
             <i className="ti ti-trash text-sm" aria-hidden="true" />
@@ -413,30 +408,27 @@ function GoalCard({
         </div>
       </div>
 
-      {/* Progress row */}
       <div className="space-y-2">
-        <div className="flex items-center justify-between gap-2">
-          {/* Percentage — click to open slider */}
+        <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
           <button
             onClick={() => !complete && onOpenProgress(goal)}
             disabled={complete}
-            className={`flex items-center gap-1.5 transition-all ${
+            className={`flex items-center gap-1.5 text-left transition-all ${
               complete
-                ? 'text-emerald-400 cursor-default'
-                : 'text-amber-400 hover:text-amber-300 group/prog'
+                ? 'cursor-default text-emerald-400'
+                : 'group/prog text-amber-400 hover:text-amber-300'
             }`}
             aria-label="Update progress"
           >
             <span className="text-xl font-bold tabular-nums">{pct}%</span>
             {!complete && (
-              <i className="ti ti-pencil text-xs opacity-0 group-hover/prog:opacity-60 transition-all" aria-hidden="true" />
+              <i className="ti ti-pencil text-xs opacity-60 transition-all sm:opacity-0 sm:group-hover/prog:opacity-60" aria-hidden="true" />
             )}
           </button>
 
-          {/* Date + days remaining */}
-          <div className="flex items-center gap-3 text-xs">
+          <div className="flex flex-wrap items-center gap-3 text-xs">
             {goal.target_date && (
-              <span className="text-slate-700 tabular-nums">
+              <span className="tabular-nums text-slate-700">
                 <i className="ti ti-calendar mr-1" aria-hidden="true" />
                 {formatDate(goal.target_date)}
               </span>
@@ -447,8 +439,7 @@ function GoalCard({
           </div>
         </div>
 
-        {/* Progress bar */}
-        <div className="h-2 bg-slate-800 rounded-full overflow-hidden">
+        <div className="h-2 overflow-hidden rounded-full bg-slate-800">
           <div
             className={`h-full rounded-full transition-all duration-700 ${
               complete ? 'bg-emerald-500' : 'bg-amber-500'
@@ -457,9 +448,8 @@ function GoalCard({
           />
         </div>
 
-        {/* Inline progress slider (opens when % is clicked) */}
         {progressOpen && !complete && (
-          <div className="flex items-center gap-3 pt-1">
+          <div className="flex flex-col gap-3 pt-1 sm:flex-row sm:items-center">
             <input
               type="range"
               min="0" max="100" step="1"
@@ -467,21 +457,23 @@ function GoalCard({
               onChange={(e) => onProgressChange(Number(e.target.value))}
               className="flex-1"
             />
-            <span className="text-xs font-mono text-slate-400 w-8 text-right tabular-nums">
+            <span className="w-8 text-left text-xs font-mono tabular-nums text-slate-400 sm:text-right">
               {Math.round(progressVal)}%
             </span>
-            <button
-              onClick={() => onSaveProgress(goal.id)}
-              className="px-3 py-1.5 text-xs font-semibold bg-amber-500 hover:bg-amber-400 text-slate-950 rounded-lg transition-all"
-            >
-              Save
-            </button>
-            <button
-              onClick={onCancelProgress}
-              className="px-3 py-1.5 text-xs text-slate-500 hover:text-white border border-slate-800 hover:border-slate-700 rounded-lg transition-all"
-            >
-              Cancel
-            </button>
+            <div className="flex gap-2 sm:flex-shrink-0">
+              <button
+                onClick={() => onSaveProgress(goal.id)}
+                className="rounded-lg bg-amber-500 px-3 py-1.5 text-xs font-semibold text-slate-950 transition-all hover:bg-amber-400"
+              >
+                Save
+              </button>
+              <button
+                onClick={onCancelProgress}
+                className="rounded-lg border border-slate-800 px-3 py-1.5 text-xs text-slate-500 transition-all hover:border-slate-700 hover:text-white"
+              >
+                Cancel
+              </button>
+            </div>
           </div>
         )}
       </div>
@@ -493,7 +485,7 @@ function EditGoalCard({ form, setForm, onSave, onCancel }) {
   return (
     <form
       onSubmit={onSave}
-      className="bg-slate-900 border border-amber-800/40 rounded-xl p-5 space-y-3"
+      className="space-y-3 rounded-xl border border-amber-800/40 bg-slate-900 p-4 sm:p-5"
     >
       <input
         value={form.title}
@@ -501,35 +493,35 @@ function EditGoalCard({ form, setForm, onSave, onCancel }) {
         onKeyDown={(e) => { if (e.key === 'Escape') onCancel() }}
         autoFocus
         required
-        className="w-full bg-slate-800 border border-slate-700 rounded-xl px-4 py-2.5 text-sm text-white focus:outline-none focus:border-amber-500 focus:ring-1 focus:ring-amber-500 transition-all"
+        className="w-full rounded-xl border border-slate-700 bg-slate-800 px-4 py-2.5 text-sm text-white transition-all focus:border-amber-500 focus:outline-none focus:ring-1 focus:ring-amber-500"
       />
       <textarea
         value={form.description}
         onChange={(e) => setForm((p) => ({ ...p, description: e.target.value }))}
         placeholder="Description (optional)"
-        rows={2}
-        className="w-full bg-slate-800 border border-slate-700 rounded-xl px-4 py-2.5 text-sm text-white placeholder-slate-600 focus:outline-none focus:border-amber-500 focus:ring-1 focus:ring-amber-500 transition-all resize-none"
+        rows={3}
+        className="w-full resize-none rounded-xl border border-slate-700 bg-slate-800 px-4 py-2.5 text-sm text-white placeholder-slate-600 transition-all focus:border-amber-500 focus:outline-none focus:ring-1 focus:ring-amber-500"
       />
-      <div className="flex items-center gap-2 bg-slate-800 border border-slate-700 rounded-xl px-3 py-2.5">
-        <i className="ti ti-calendar text-slate-500 text-sm" aria-hidden="true" />
+      <div className="flex items-center gap-2 rounded-xl border border-slate-700 bg-slate-800 px-3 py-2.5">
+        <i className="ti ti-calendar text-sm text-slate-500" aria-hidden="true" />
         <input
           type="date"
           value={form.target_date}
           onChange={(e) => setForm((p) => ({ ...p, target_date: e.target.value }))}
-          className="bg-transparent text-sm text-slate-300 outline-none flex-1"
+          className="min-w-0 flex-1 bg-transparent text-sm text-slate-300 outline-none"
         />
       </div>
-      <div className="flex gap-2 justify-end">
+      <div className="flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
         <button
           type="button"
           onClick={onCancel}
-          className="px-4 py-2 text-sm text-slate-500 hover:text-white border border-slate-800 hover:border-slate-700 rounded-xl transition-all"
+          className="rounded-xl border border-slate-800 px-4 py-2 text-sm text-slate-500 transition-all hover:border-slate-700 hover:text-white"
         >
           Cancel
         </button>
         <button
           type="submit"
-          className="px-4 py-2 text-sm font-semibold bg-amber-500 hover:bg-amber-400 text-slate-950 rounded-xl transition-all"
+          className="rounded-xl bg-amber-500 px-4 py-2 text-sm font-semibold text-slate-950 transition-all hover:bg-amber-400"
         >
           Save changes
         </button>

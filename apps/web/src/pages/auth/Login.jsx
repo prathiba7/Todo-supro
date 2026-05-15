@@ -39,40 +39,37 @@ export default function Login() {
   }
 
   return (
-    <div className="min-h-screen bg-slate-950 flex flex-col items-center justify-center p-4">
+    <div className="flex min-h-screen flex-col items-center justify-center bg-slate-950 px-4 py-8 sm:px-6">
       <div className="w-full max-w-sm">
-
-        {/* Brand */}
-        <div className="text-center mb-10">
-          <h1 className="text-5xl font-bold text-white tracking-tight">Supro</h1>
-          <p className="text-slate-500 mt-2 text-sm">Your discipline. Your legacy.</p>
+        <div className="mb-8 text-center sm:mb-10">
+          <h1 className="text-4xl font-bold tracking-tight text-white sm:text-5xl">Supro</h1>
+          <p className="mt-2 text-sm text-slate-500">Your discipline. Your legacy.</p>
         </div>
 
-        {/* Card */}
-        <div className="bg-slate-900 border border-slate-800 rounded-2xl p-7">
-          <h2 className="text-lg font-semibold text-white mb-5">Welcome back</h2>
+        <div className="rounded-2xl border border-slate-800 bg-slate-900 p-5 sm:p-7">
+          <h2 className="mb-5 text-lg font-semibold text-white">Welcome back</h2>
 
           {error && (
-            <div className="bg-red-950 border border-red-800 rounded-xl px-4 py-3 mb-4 text-sm text-red-400">
+            <div className="mb-4 rounded-xl border border-red-800 bg-red-950 px-4 py-3 text-sm text-red-400">
               {error}
             </div>
           )}
 
           <form onSubmit={handleSubmit} className="space-y-4">
             <div>
-              <label className="block text-xs font-medium tracking-widest text-slate-400 uppercase mb-1.5">
+              <label className="mb-1.5 block text-xs font-medium uppercase tracking-widest text-slate-400">
                 Email
               </label>
               <input
                 name="email" type="email"
                 value={form.email} onChange={handleChange}
                 required placeholder="you@example.com"
-                className="w-full bg-slate-800 border border-slate-700 rounded-xl px-4 py-3 text-sm text-white placeholder-slate-600 focus:outline-none focus:border-amber-500 focus:ring-1 focus:ring-amber-500 transition-all"
+                className="w-full rounded-xl border border-slate-700 bg-slate-800 px-4 py-3 text-sm text-white placeholder-slate-600 transition-all focus:border-amber-500 focus:outline-none focus:ring-1 focus:ring-amber-500"
               />
             </div>
 
             <div>
-              <label className="block text-xs font-medium tracking-widest text-slate-400 uppercase mb-1.5">
+              <label className="mb-1.5 block text-xs font-medium uppercase tracking-widest text-slate-400">
                 Password
               </label>
               <div className="relative">
@@ -80,11 +77,11 @@ export default function Login() {
                   name="password" type={showPw ? 'text' : 'password'}
                   value={form.password} onChange={handleChange}
                   required placeholder="••••••••"
-                  className="w-full bg-slate-800 border border-slate-700 rounded-xl px-4 py-3 pr-14 text-sm text-white placeholder-slate-600 focus:outline-none focus:border-amber-500 focus:ring-1 focus:ring-amber-500 transition-all"
+                  className="w-full rounded-xl border border-slate-700 bg-slate-800 px-4 py-3 pr-16 text-sm text-white placeholder-slate-600 transition-all focus:border-amber-500 focus:outline-none focus:ring-1 focus:ring-amber-500"
                 />
                 <button
                   type="button" onClick={() => setShowPw((v) => !v)}
-                  className="absolute right-4 top-1/2 -translate-y-1/2 text-xs text-slate-500 hover:text-slate-300"
+                  className="absolute right-4 top-1/2 -translate-y-1/2 text-xs text-slate-500 transition-colors hover:text-slate-300"
                 >
                   {showPw ? 'Hide' : 'Show'}
                 </button>
@@ -93,22 +90,21 @@ export default function Login() {
 
             <button
               type="submit" disabled={loading}
-              className="w-full bg-amber-500 hover:bg-amber-400 active:scale-[.98] text-slate-950 font-semibold rounded-xl py-3 text-sm transition-all disabled:opacity-40 disabled:cursor-not-allowed"
+              className="w-full rounded-xl bg-amber-500 py-3 text-sm font-semibold text-slate-950 transition-all hover:bg-amber-400 active:scale-[.98] disabled:cursor-not-allowed disabled:opacity-40"
             >
               {loading ? 'Signing in...' : 'Sign in →'}
             </button>
           </form>
 
-          <p className="text-center text-sm text-slate-600 mt-5">
+          <p className="mt-5 text-center text-sm leading-relaxed text-slate-600">
             New here?{' '}
-            <Link to="/register" className="text-amber-400 hover:text-amber-300 transition-colors">
+            <Link to="/register" className="text-amber-400 transition-colors hover:text-amber-300">
               Create an account
             </Link>
           </p>
         </div>
 
-        {/* Daily quote */}
-        <p className="text-center text-xs text-slate-700 mt-6 italic px-4 leading-relaxed">
+        <p className="mt-6 px-2 text-center text-xs italic leading-relaxed text-slate-700 sm:px-4">
           "{quote}"
         </p>
       </div>
