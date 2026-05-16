@@ -60,4 +60,10 @@ export const getStreak = async () => {
   return data
 }
 
+// Reorder habits
+export const reorderHabits = async (habitIds) => {
+  const { data } = await client.post('/habits/reorder', { habitIds })
+  return data
+}
+
 // Made with Bob

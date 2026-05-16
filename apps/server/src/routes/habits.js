@@ -318,6 +318,38 @@ router.get('/streak', async (req, res) => {
   }
 });
 
+// POST /api/habits/reorder - Update habit order
+router.post('/reorder', async (req, res) => {
+  const { habitIds } = req.body;
+
+  if (!Array.isArray(habitIds) || habitIds.length === 0) {
+    return res.status(400).json({ error: 'habitIds array is required.' });
+  }
+
+  const client = await pool.connect();
+  
+  try {
+    await client.query('BEGIN');
+
+    // Update sort_order for each habit
+    for (let i = 0; i < habitIds.length; i++) {
+      await client.query(
+        'UPDATE habits SET sort_order = $1 WHERE id = $2 AND user_id = $3',
+        [i, habitIds[i], req.user.id]
+      );
+    }
+
+    await client.query('COMMIT');
+    res.json({ success: true, message: 'Habit order updated successfully.' });
+  } catch (err) {
+    await client.query('ROLLBACK');
+    console.error(err);
+    res.status(500).json({ error: 'Failed to update habit order.' });
+  } finally {
+    client.release();
+  }
+});
+
 module.exports = router;
 
 // Made with Bob

@@ -416,7 +416,7 @@ export default function Dashboard() {
                 </div>
               ) : (
                 <div className="mt-3 space-y-2">
-                  {habits.slice(0, 5).map((habit, index) => {
+                  {habits.map((habit, index) => {
                     const isPending = togglingHabit.has(habit.id)
                     return (
                       <motion.button
@@ -866,39 +866,6 @@ function TaskRow({ task, onToggle, onDelete, index }) {
   )
 }
 
-function GoalCard({ goal, index }) {
-  const pct = Math.min(100, Math.max(0, goal.progress ?? 0))
-  const daysLeft = goal.target_date
-    ? Math.ceil((new Date(goal.target_date) - new Date()) / 86_400_000)
-    : null
-
-  return (
-    <motion.div
-      initial={{ opacity: 0, x: 20 }}
-      animate={{ opacity: 1, x: 0 }}
-      transition={{ delay: index * 0.05 }}
-      className="card p-4"
-    >
-      <div className="flex items-start justify-between gap-2 mb-3">
-        <p className="text-sm font-medium text-gray-900 flex-1">{goal.title}</p>
-        <span className="text-sm font-bold text-violet-600">{pct}%</span>
-      </div>
-      <div className="progress-bar">
-        <motion.div
-          initial={{ width: 0 }}
-          animate={{ width: `${pct}%` }}
-          transition={{ duration: 0.8, ease: 'easeOut' }}
-          className="progress-fill"
-        />
-      </div>
-      {daysLeft !== null && (
-        <p className="mt-2 text-xs text-gray-500">
-          {daysLeft > 0 ? `${daysLeft} days left` : daysLeft === 0 ? 'Due today!' : 'Overdue'}
-        </p>
-      )}
-    </motion.div>
-  )
-}
 
 function EmptyState({ icon, text, subtext }) {
   return (

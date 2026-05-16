@@ -1,6 +1,6 @@
   import { useState, useEffect, useRef } from 'react'
-import { motion, AnimatePresence } from 'framer-motion'
-import Layout from '../components/Layout'
+  import { motion, AnimatePresence, Reorder } from 'framer-motion'
+  import Layout from '../components/Layout'
 import {
   getTodayHabits,
   getHabitsByDate,
@@ -10,7 +10,8 @@ import {
   getHabitHistory,
   createHabit,
   deleteHabit,
-  getHabits
+  getHabits,
+  reorderHabits
 } from '../api/habits'
 
 const ICON_OPTIONS = [
@@ -326,6 +327,23 @@ export default function Habits() {
     }
   }
 
+  const handleReorder = (fromIndex, toIndex) => {
+    const reordered = Array.from(habits)
+    const [removed] = reordered.splice(fromIndex, 1)
+    reordered.splice(toIndex, 0, removed)
+    
+    // Optimistically update UI
+    setHabits(reordered)
+    
+    // Save to backend
+    const habitIds = reordered.map(h => h.id)
+    reorderHabits(habitIds).catch(err => {
+      console.error('Failed to save habit order:', err)
+      // Revert on error
+      load()
+    })
+  }
+
   const doneCount = habits.filter((h) => h.is_done).length
   const allDone = habits.length > 0 && doneCount === habits.length
   // Use max repeat_days from all habits, or default to 75
@@ -560,30 +578,43 @@ export default function Habits() {
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.2 }}
-              className="space-y-3"
             >
-              <AnimatePresence>
+              <Reorder.Group
+                axis="y"
+                values={habits}
+                onReorder={setHabits}
+                className="space-y-3"
+              >
                 {habits.map((habit, index) => {
                   const colorClasses = getColorClasses(habit.color)
                   const isPending = toggling.has(habit.id)
 
                   return (
-                    <motion.div
+                    <Reorder.Item
                       key={habit.id}
-                      initial={{ opacity: 0, x: -20 }}
-                      animate={{ opacity: 1, x: 0 }}
-                      exit={{ opacity: 0, x: 20 }}
-                      transition={{ delay: index * 0.05 }}
+                      value={habit}
                       className="group"
+                      onDragEnd={() => {
+                        // Save order when drag ends
+                        const habitIds = habits.map(h => h.id)
+                        reorderHabits(habitIds).catch(err => {
+                          console.error('Failed to save habit order:', err)
+                        })
+                      }}
                     >
                       <div
-                        className={`card p-5 transition-all duration-300 ${
+                        className={`card p-5 transition-all duration-300 cursor-grab active:cursor-grabbing ${
                           habit.is_done
                             ? `${colorClasses.lightClass} border-${habit.color}-200`
                             : 'hover:shadow-lg'
                         } ${isPending ? 'opacity-60' : ''}`}
                       >
                         <div className="flex items-center gap-4">
+                          {/* Drag Handle */}
+                          <div className="flex h-12 w-8 flex-shrink-0 items-center justify-center text-gray-400 hover:text-gray-600 cursor-grab active:cursor-grabbing">
+                            <i className="ti ti-grip-vertical text-xl" />
+                          </div>
+
                           {/* Checkbox */}
                           <motion.button
                             whileHover={{ scale: 1.1 }}
@@ -636,10 +667,10 @@ export default function Habits() {
                           </motion.button>
                         </div>
                       </div>
-                    </motion.div>
+                    </Reorder.Item>
                   )
                 })}
-              </AnimatePresence>
+              </Reorder.Group>
             </motion.div>
 
             {/* Heatmap */}
