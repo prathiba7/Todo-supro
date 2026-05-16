@@ -572,12 +572,13 @@ export default function Habits() {
                 </div>
                 <div>
                   <p className="text-xs font-semibold uppercase tracking-wider text-gray-500 mb-1">
-                    Progress
+                    Journey
                   </p>
                   <p className="text-3xl font-bold text-violet-600">
                     {Math.round((completeDays / maxDays) * 100)}
                     <span className="text-xl text-gray-400">%</span>
                   </p>
+                  <p className="text-xs text-gray-500 mt-1">Overall progress</p>
                 </div>
               </div>
 
