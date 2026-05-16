@@ -1,11 +1,11 @@
 import { useState, useEffect, useRef } from 'react'
 import { Link } from 'react-router-dom'
-import { motion, AnimatePresence } from 'framer-motion'
+import { motion, AnimatePresence, Reorder } from 'framer-motion'
 import { useAuth } from '../context/AuthContext'
 import Layout from '../components/Layout'
 import { getTasks, createTask, toggleTask, deleteTask } from '../api/tasks'
 import { getGoals } from '../api/goals'
-import { getTodayHabits, getStreak, toggleHabit, getHabitHistory, createHabit } from '../api/habits'
+import { getTodayHabits, getStreak, toggleHabit, getHabitHistory, createHabit, reorderHabits } from '../api/habits'
 
 const ICON_OPTIONS = [
   { value: 'ti-run', label: 'Run' },
@@ -415,42 +415,59 @@ export default function Dashboard() {
                   </motion.button>
                 </div>
               ) : (
-                <div className="mt-3 space-y-2">
+                <Reorder.Group
+                  axis="y"
+                  values={habits}
+                  onReorder={setHabits}
+                  className="mt-3 space-y-2"
+                >
                   {habits.map((habit, index) => {
                     const isPending = togglingHabit.has(habit.id)
                     return (
-                      <motion.button
+                      <Reorder.Item
                         key={habit.id}
-                        initial={{ opacity: 0, x: 20 }}
-                        animate={{ opacity: 1, x: 0 }}
-                        transition={{ delay: index * 0.05 }}
-                        whileHover={{ scale: 1.02 }}
-                        whileTap={{ scale: 0.98 }}
-                        onClick={() => handleToggleHabit(habit.id)}
-                        disabled={isPending}
-                        className={`w-full flex items-center gap-3 rounded-xl border px-3 py-2.5 transition-all ${
-                          habit.is_done
-                            ? 'border-emerald-200 bg-emerald-50'
-                            : 'border-gray-200 bg-white hover:border-violet-300 hover:shadow-sm'
-                        } ${isPending ? 'opacity-60 cursor-wait' : 'cursor-pointer'}`}
+                        value={habit}
+                        onDragEnd={() => {
+                          // Save order when drag ends
+                          const habitIds = habits.map(h => h.id)
+                          reorderHabits(habitIds).catch(err => {
+                            console.error('Failed to save habit order:', err)
+                          })
+                        }}
                       >
-                        <i
-                          className={`ti ${habit.icon} text-sm ${
-                            habit.is_done ? 'text-emerald-600' : 'text-gray-400'
-                          }`}
-                        />
-                        <span
-                          className={`flex-1 text-sm text-left ${
-                            habit.is_done ? 'text-emerald-700 line-through' : 'text-gray-700'
-                          }`}
+                        <motion.button
+                          initial={{ opacity: 0, x: 20 }}
+                          animate={{ opacity: 1, x: 0 }}
+                          transition={{ delay: index * 0.05 }}
+                          whileHover={{ scale: 1.02 }}
+                          whileTap={{ scale: 0.98 }}
+                          onClick={() => handleToggleHabit(habit.id)}
+                          disabled={isPending}
+                          className={`w-full flex items-center gap-3 rounded-xl border px-3 py-2.5 transition-all cursor-grab active:cursor-grabbing ${
+                            habit.is_done
+                              ? 'border-emerald-200 bg-emerald-50'
+                              : 'border-gray-200 bg-white hover:border-violet-300 hover:shadow-sm'
+                          } ${isPending ? 'opacity-60 cursor-wait' : ''}`}
                         >
-                          {habit.name}
-                        </span>
-                        {habit.is_done && <i className="ti ti-check text-xs text-emerald-600" />}
-                      </motion.button>
+                          <i className="ti ti-grip-vertical text-xs text-gray-400" />
+                          <i
+                            className={`ti ${habit.icon} text-sm ${
+                              habit.is_done ? 'text-emerald-600' : 'text-gray-400'
+                            }`}
+                          />
+                          <span
+                            className={`flex-1 text-sm text-left ${
+                              habit.is_done ? 'text-emerald-700 line-through' : 'text-gray-700'
+                            }`}
+                          >
+                            {habit.name}
+                          </span>
+                          {habit.is_done && <i className="ti ti-check text-xs text-emerald-600" />}
+                        </motion.button>
+                      </Reorder.Item>
                     )
                   })}
-                </div>
+                </Reorder.Group>
               )}
             </div>
           </motion.div>
