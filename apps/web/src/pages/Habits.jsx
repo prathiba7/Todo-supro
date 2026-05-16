@@ -9,6 +9,7 @@ import {
   getStreak,
   getHabitHistory,
   createHabit,
+  updateHabit,
   deleteHabit,
   getHabits,
   reorderHabits
@@ -182,6 +183,9 @@ export default function Habits() {
     color: 'violet',
     repeat_days: 75,
   })
+  
+  const [showEditModal, setShowEditModal] = useState(false)
+  const [editingHabit, setEditingHabit] = useState(null)
 
   useEffect(() => {
     load()
@@ -342,6 +346,39 @@ export default function Habits() {
       // Revert on error
       load()
     })
+  }
+
+  const handleEditHabit = (habit) => {
+    setEditingHabit({
+      id: habit.id,
+      name: habit.name,
+      description: habit.description || '',
+      icon: habit.icon,
+      color: habit.color,
+      repeat_days: habit.repeat_days
+    })
+    setShowEditModal(true)
+  }
+
+  const handleUpdateHabit = async (e) => {
+    e.preventDefault()
+    if (!editingHabit.name.trim()) return
+
+    try {
+      await updateHabit(editingHabit.id, {
+        name: editingHabit.name,
+        description: editingHabit.description,
+        icon: editingHabit.icon,
+        color: editingHabit.color,
+        repeat_days: editingHabit.repeat_days
+      })
+      setShowEditModal(false)
+      setEditingHabit(null)
+      load()
+    } catch (err) {
+      console.error(err)
+      alert('Failed to update habit')
+    }
   }
 
   const doneCount = habits.filter((h) => h.is_done).length
@@ -603,7 +640,7 @@ export default function Habits() {
                       }}
                     >
                       <div
-                        className={`card p-5 transition-all duration-300 cursor-grab active:cursor-grabbing ${
+                        className={`card p-5 transition-all duration-300 ${
                           habit.is_done
                             ? `${colorClasses.lightClass} border-${habit.color}-200`
                             : 'hover:shadow-lg'
@@ -619,7 +656,10 @@ export default function Habits() {
                           <motion.button
                             whileHover={{ scale: 1.1 }}
                             whileTap={{ scale: 0.9 }}
-                            onClick={() => handleToggle(habit.id)}
+                            onClick={(e) => {
+                              e.stopPropagation()
+                              handleToggle(habit.id)
+                            }}
                             disabled={isPending}
                             className={`flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-xl transition-all ${
                               habit.is_done
@@ -634,8 +674,11 @@ export default function Habits() {
                             )}
                           </motion.button>
 
-                          {/* Content */}
-                          <div className="flex-1 min-w-0">
+                          {/* Content - Clickable to toggle */}
+                          <div
+                            className="flex-1 min-w-0 cursor-pointer"
+                            onClick={() => !isPending && handleToggle(habit.id)}
+                          >
                             <h3
                               className={`text-lg font-semibold transition-all ${
                                 habit.is_done
@@ -656,11 +699,27 @@ export default function Habits() {
                             )}
                           </div>
 
+                          {/* Edit Button */}
+                          <motion.button
+                            whileHover={{ scale: 1.1 }}
+                            whileTap={{ scale: 0.9 }}
+                            onClick={(e) => {
+                              e.stopPropagation()
+                              handleEditHabit(habit)
+                            }}
+                            className="opacity-0 group-hover:opacity-100 transition-opacity flex h-10 w-10 items-center justify-center rounded-lg bg-blue-50 text-blue-600 hover:bg-blue-100"
+                          >
+                            <i className="ti ti-edit text-lg" />
+                          </motion.button>
+
                           {/* Delete Button */}
                           <motion.button
                             whileHover={{ scale: 1.1 }}
                             whileTap={{ scale: 0.9 }}
-                            onClick={() => handleDeleteHabit(habit.id)}
+                            onClick={(e) => {
+                              e.stopPropagation()
+                              handleDeleteHabit(habit.id)
+                            }}
                             className="opacity-0 group-hover:opacity-100 transition-opacity flex h-10 w-10 items-center justify-center rounded-lg bg-red-50 text-red-600 hover:bg-red-100"
                           >
                             <i className="ti ti-trash text-lg" />
@@ -878,6 +937,134 @@ export default function Habits() {
                   <button type="submit" className="btn btn-primary flex-1">
                     <i className="ti ti-plus" />
                     Create Habit
+                  </button>
+                </div>
+              </form>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* Edit Habit Modal */}
+      <AnimatePresence>
+        {showEditModal && editingHabit && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4 overflow-y-auto"
+            onClick={() => setShowEditModal(false)}
+          >
+            <motion.div
+              initial={{ scale: 0.9, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.9, opacity: 0 }}
+              onClick={(e) => e.stopPropagation()}
+              className="card w-full max-w-lg p-6 my-8 max-h-[90vh] overflow-y-auto"
+            >
+              <div className="mb-6 flex items-center justify-between">
+                <h2 className="text-2xl font-bold text-gray-900">Edit Habit</h2>
+                <button
+                  onClick={() => setShowEditModal(false)}
+                  className="flex h-10 w-10 items-center justify-center rounded-lg hover:bg-gray-100 transition-colors"
+                >
+                  <i className="ti ti-x text-xl text-gray-600" />
+                </button>
+              </div>
+
+              <form onSubmit={handleUpdateHabit} className="space-y-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Habit Name *
+                  </label>
+                  <input
+                    type="text"
+                    value={editingHabit.name}
+                    onChange={(e) => setEditingHabit({ ...editingHabit, name: e.target.value })}
+                    placeholder="e.g., Morning workout"
+                    className="input"
+                    required
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Description (optional)
+                  </label>
+                  <textarea
+                    value={editingHabit.description}
+                    onChange={(e) => setEditingHabit({ ...editingHabit, description: e.target.value })}
+                    placeholder="e.g., 30 minutes of cardio"
+                    className="input resize-none"
+                    rows="2"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">Icon</label>
+                  <div className="grid grid-cols-5 gap-2">
+                    {ICON_OPTIONS.map((icon) => (
+                      <button
+                        key={icon.value}
+                        type="button"
+                        onClick={() => setEditingHabit({ ...editingHabit, icon: icon.value })}
+                        className={`flex h-12 items-center justify-center rounded-lg border-2 transition-all ${
+                          editingHabit.icon === icon.value
+                            ? 'border-violet-500 bg-violet-50'
+                            : 'border-gray-200 hover:border-gray-300'
+                        }`}
+                      >
+                        <i className={`ti ${icon.value} text-xl`} />
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">Color</label>
+                  <div className="flex gap-2">
+                    {COLOR_OPTIONS.map((color) => (
+                      <button
+                        key={color.value}
+                        type="button"
+                        onClick={() => setEditingHabit({ ...editingHabit, color: color.value })}
+                        className={`h-10 w-10 rounded-lg ${color.class} transition-all ${
+                          editingHabit.color === color.value
+                            ? 'ring-2 ring-offset-2 ring-gray-400 scale-110'
+                            : 'hover:scale-105'
+                        }`}
+                      />
+                    ))}
+                  </div>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Challenge Duration (days)
+                  </label>
+                  <input
+                    type="number"
+                    value={editingHabit.repeat_days}
+                    onChange={(e) =>
+                      setEditingHabit({ ...editingHabit, repeat_days: parseInt(e.target.value) || 75 })
+                    }
+                    min="1"
+                    max="365"
+                    className="input"
+                  />
+                </div>
+
+                <div className="flex gap-3 pt-4">
+                  <button
+                    type="button"
+                    onClick={() => setShowEditModal(false)}
+                    className="btn btn-secondary flex-1"
+                  >
+                    Cancel
+                  </button>
+                  <button type="submit" className="btn btn-primary flex-1">
+                    <i className="ti ti-check" />
+                    Update Habit
                   </button>
                 </div>
               </form>
