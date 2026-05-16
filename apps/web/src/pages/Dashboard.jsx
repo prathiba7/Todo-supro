@@ -400,6 +400,29 @@ export default function Dashboard() {
                   </Link>
                 </div>
               </div>
+              
+              {/* Streak Display */}
+              {habits.length > 0 && (
+                <motion.div
+                  initial={{ opacity: 0, y: -10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  className="mb-3 p-3 rounded-lg bg-gradient-to-r from-orange-50 to-red-50 border border-orange-200"
+                >
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <i className="ti ti-flame text-2xl text-orange-600" />
+                      <div>
+                        <p className="text-sm font-medium text-gray-700">Current Streak</p>
+                        <p className="text-xs text-gray-500">Keep it going!</p>
+                      </div>
+                    </div>
+                    <div className="text-right">
+                      <p className="text-3xl font-bold text-orange-600">{streak}</p>
+                      <p className="text-xs text-gray-500">days</p>
+                    </div>
+                  </div>
+                </motion.div>
+              )}
               {habits.length === 0 ? (
                 <div className="text-center py-8">
                   <i className="ti ti-flame text-4xl text-gray-300 mb-2" />
