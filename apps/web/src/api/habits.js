@@ -30,9 +30,21 @@ export const getTodayHabits = async () => {
   return data
 }
 
+// Get habits for a specific date
+export const getHabitsByDate = async (date) => {
+  const { data } = await client.get(`/habits/date/${date}`)
+  return data
+}
+
 // Toggle habit completion for today
 export const toggleHabit = async (id) => {
   const { data } = await client.post(`/habits/${id}/toggle`)
+  return data
+}
+
+// Toggle habit completion for a specific date
+export const toggleHabitForDate = async (id, date) => {
+  const { data } = await client.post(`/habits/${id}/toggle`, { date })
   return data
 }
 

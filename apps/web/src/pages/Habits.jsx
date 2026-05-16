@@ -3,7 +3,9 @@ import { motion, AnimatePresence } from 'framer-motion'
 import Layout from '../components/Layout'
 import {
   getTodayHabits,
+  getHabitsByDate,
   toggleHabit,
+  toggleHabitForDate,
   getStreak,
   getHabitHistory,
   createHabit,
@@ -164,6 +166,14 @@ export default function Habits() {
   const [showCelebration, setShowCelebration] = useState(false)
   const [showConfetti, setShowConfetti] = useState(false)
   const previousAllDoneRef = useRef(false)
+  
+  // Date selection state
+  const [selectedDate, setSelectedDate] = useState(() => {
+    const today = new Date()
+    return today.toISOString().split('T')[0]
+  })
+  const [isToday, setIsToday] = useState(true)
+  
   const [newHabit, setNewHabit] = useState({
     name: '',
     description: '',
@@ -174,14 +184,24 @@ export default function Habits() {
 
   useEffect(() => {
     load()
-  }, [])
+  }, [selectedDate])
+
+  useEffect(() => {
+    const today = new Date().toISOString().split('T')[0]
+    setIsToday(selectedDate === today)
+  }, [selectedDate])
 
   const load = async () => {
     setLoading(true)
     setError(null)
     try {
+      const today = new Date().toISOString().split('T')[0]
+      const habitsPromise = selectedDate === today
+        ? getTodayHabits()
+        : getHabitsByDate(selectedDate)
+      
       const [h, s, hist] = await Promise.all([
-        getTodayHabits(),
+        habitsPromise,
         getStreak(),
         getHabitHistory(75),
       ])
@@ -206,7 +226,13 @@ export default function Habits() {
     )
 
     try {
-      await toggleHabit(habitId)
+      // Use date-specific toggle if not today
+      if (isToday) {
+        await toggleHabit(habitId)
+      } else {
+        await toggleHabitForDate(habitId, selectedDate)
+      }
+      
       // Reload streak and history to update heatmap
       const [s, hist] = await Promise.all([
         getStreak(),
@@ -227,6 +253,27 @@ export default function Habits() {
         return n
       })
     }
+  }
+
+  const goToPreviousDay = () => {
+    const date = new Date(selectedDate)
+    date.setDate(date.getDate() - 1)
+    setSelectedDate(date.toISOString().split('T')[0])
+  }
+
+  const goToNextDay = () => {
+    const date = new Date(selectedDate)
+    const today = new Date().toISOString().split('T')[0]
+    date.setDate(date.getDate() + 1)
+    const newDate = date.toISOString().split('T')[0]
+    if (newDate <= today) {
+      setSelectedDate(newDate)
+    }
+  }
+
+  const goToToday = () => {
+    const today = new Date().toISOString().split('T')[0]
+    setSelectedDate(today)
   }
 
   // Check if all habits are completed and trigger celebration
@@ -300,30 +347,97 @@ export default function Habits() {
         <motion.div
           initial={{ opacity: 0, y: -20 }}
           animate={{ opacity: 1, y: 0 }}
-          className="flex items-center justify-between"
+          className="flex flex-col gap-4"
         >
-          <div>
-            <h1 className="text-3xl font-bold text-gray-900 flex items-center gap-3">
-              <span className="flex h-12 w-12 items-center justify-center rounded-2xl bg-gradient-to-br from-orange-500 to-pink-500 shadow-lg">
-                <i className="ti ti-flame text-2xl text-white" />
-              </span>
-              Daily Habits
-            </h1>
-            <p className="mt-1 text-gray-600">
-              {streak > 0 ? `🔥 ${streak}-day streak` : 'Start your journey today'}
-              {' · '}
-              {completeDays} of {maxDays} days complete
-            </p>
+          <div className="flex items-center justify-between">
+            <div>
+              <h1 className="text-3xl font-bold text-gray-900 flex items-center gap-3">
+                <span className="flex h-12 w-12 items-center justify-center rounded-2xl bg-gradient-to-br from-orange-500 to-pink-500 shadow-lg">
+                  <i className="ti ti-flame text-2xl text-white" />
+                </span>
+                Daily Habits
+              </h1>
+              <p className="mt-1 text-gray-600">
+                {streak > 0 ? `🔥 ${streak}-day streak` : 'Start your journey today'}
+                {' · '}
+                {completeDays} of {maxDays} days complete
+              </p>
+            </div>
+            <motion.button
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
+              onClick={() => setShowAddModal(true)}
+              className="btn btn-primary"
+            >
+              <i className="ti ti-plus text-lg" />
+              Add Habit
+            </motion.button>
           </div>
-          <motion.button
-            whileHover={{ scale: 1.05 }}
-            whileTap={{ scale: 0.95 }}
-            onClick={() => setShowAddModal(true)}
-            className="btn btn-primary"
+
+          {/* Date Navigator */}
+          <motion.div
+            initial={{ opacity: 0, y: -10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.1 }}
+            className="card p-4"
           >
-            <i className="ti ti-plus text-lg" />
-            Add Habit
-          </motion.button>
+            <div className="flex items-center justify-between gap-4">
+              <motion.button
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+                onClick={goToPreviousDay}
+                className="flex h-10 w-10 items-center justify-center rounded-lg bg-gray-100 hover:bg-gray-200 transition-colors"
+              >
+                <i className="ti ti-chevron-left text-xl text-gray-700" />
+              </motion.button>
+
+              <div className="flex-1 text-center">
+                <div className="flex items-center justify-center gap-2">
+                  <input
+                    type="date"
+                    value={selectedDate}
+                    onChange={(e) => setSelectedDate(e.target.value)}
+                    max={new Date().toISOString().split('T')[0]}
+                    className="input text-center font-semibold"
+                  />
+                  {!isToday && (
+                    <motion.button
+                      initial={{ opacity: 0, scale: 0.8 }}
+                      animate={{ opacity: 1, scale: 1 }}
+                      whileHover={{ scale: 1.05 }}
+                      whileTap={{ scale: 0.95 }}
+                      onClick={goToToday}
+                      className="btn btn-secondary text-sm"
+                    >
+                      <i className="ti ti-calendar-today text-lg" />
+                      Today
+                    </motion.button>
+                  )}
+                </div>
+                <p className="text-xs text-gray-500 mt-1">
+                  {isToday ? (
+                    <span className="text-emerald-600 font-medium">📅 Viewing Today</span>
+                  ) : (
+                    <span className="text-orange-600 font-medium">📆 Viewing Past Day</span>
+                  )}
+                </p>
+              </div>
+
+              <motion.button
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+                onClick={goToNextDay}
+                disabled={isToday}
+                className={`flex h-10 w-10 items-center justify-center rounded-lg transition-colors ${
+                  isToday
+                    ? 'bg-gray-50 cursor-not-allowed opacity-50'
+                    : 'bg-gray-100 hover:bg-gray-200'
+                }`}
+              >
+                <i className="ti ti-chevron-right text-xl text-gray-700" />
+              </motion.button>
+            </div>
+          </motion.div>
         </motion.div>
 
         {loading && (

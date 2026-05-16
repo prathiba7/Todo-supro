@@ -168,14 +168,46 @@ router.get('/today', async (req, res) => {
   }
 });
 
+// GET /api/habits/date/:date - Get habits for a specific date
+router.get('/date/:date', async (req, res) => {
+  const { date } = req.params;
+
+  try {
+    const result = await pool.query(
+      `SELECT h.*,
+              COALESCE(hl.is_done, false) as is_done,
+              hl.id as log_id
+       FROM habits h
+       LEFT JOIN habit_logs hl ON h.id = hl.habit_id
+         AND hl.user_id = $1
+         AND hl.log_date = $2
+       WHERE h.user_id = $1 AND h.is_active = true
+       ORDER BY h.sort_order ASC, h.created_at ASC`,
+      [req.user.id, date]
+    );
+
+    res.json(result.rows);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Failed to fetch habits for date.' });
+  }
+});
+
 // POST /api/habits/:id/toggle - Toggle habit completion for today
 router.post('/:id/toggle', async (req, res) => {
   const { id } = req.params;
-  // Use local date, not UTC
-  const now = new Date();
-  const today = now.getFullYear() + '-' +
-    String(now.getMonth() + 1).padStart(2, '0') + '-' +
-    String(now.getDate()).padStart(2, '0');
+  const { date } = req.body; // Allow passing a specific date
+  
+  // Use provided date or default to today
+  let targetDate;
+  if (date) {
+    targetDate = date;
+  } else {
+    const now = new Date();
+    targetDate = now.getFullYear() + '-' +
+      String(now.getMonth() + 1).padStart(2, '0') + '-' +
+      String(now.getDate()).padStart(2, '0');
+  }
 
   try {
     // Check if habit exists and belongs to user
@@ -195,7 +227,7 @@ router.post('/:id/toggle', async (req, res) => {
        ON CONFLICT (user_id, habit_id, log_date)
        DO UPDATE SET is_done = NOT habit_logs.is_done
        RETURNING *`,
-      [req.user.id, id, today]
+      [req.user.id, id, targetDate]
     );
 
     res.json(result.rows[0]);
