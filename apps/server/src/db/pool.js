@@ -1,25 +1,25 @@
 
-const { Pool } = require('pg');
-require('dotenv').config();
+// apps/server/src/db/pool.js
+const { Pool } = require('pg')
+require('dotenv').config()
 
 const pool = new Pool({
   connectionString: process.env.DATABASE_URL,
-  // Keep up to 10 connections open
+  // ← THIS IS THE FIX: Render PostgreSQL requires SSL
+  ssl: process.env.NODE_ENV === 'production'
+    ? { rejectUnauthorized: false }
+    : false,
   max: 10,
-  // Close idle connections after 30 seconds
   idleTimeoutMillis: 30000,
-  // Timeout if we wait > 2s for a connection
   connectionTimeoutMillis: 2000,
-});
+})
 
-// Test the connection when the server starts
 pool.on('connect', () => {
-  console.log('Connected to PostgreSQL');
-});
+  console.log('✓ Connected to PostgreSQL')
+})
 
 pool.on('error', (err) => {
-  console.error('Unexpected DB error', err);
-  process.exit(-1);
-});
+  console.error('✗ DB pool error:', err.message)
+})
 
-module.exports = pool;
+module.exports = pool
