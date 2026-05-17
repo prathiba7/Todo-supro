@@ -267,71 +267,116 @@ router.get('/history', async (req, res) => {
 // GET /api/habits/streak - Get current streak
 router.get('/streak', async (req, res) => {
   try {
-    // Get all active habits
+    // Get all active habits with their creation dates
     const habitsResult = await pool.query(
-      'SELECT id FROM habits WHERE user_id = $1 AND is_active = true',
+      'SELECT id, created_at FROM habits WHERE user_id = $1 AND is_active = true',
       [req.user.id]
     );
 
-    const habitIds = habitsResult.rows.map(h => h.id);
+    const habits = habitsResult.rows;
+    console.log('Active habits:', habits.length);
 
-    if (habitIds.length === 0) {
+    if (habits.length === 0) {
       return res.json({ streak: 0 });
     }
 
-    // Get dates where ALL habits were completed
-    const result = await pool.query(
-      `SELECT log_date, COUNT(*) as completed_count
+    // Get all habit logs for this user
+    const logsResult = await pool.query(
+      `SELECT log_date::text as log_date, habit_id, is_done
        FROM habit_logs
        WHERE user_id = $1
-         AND habit_id = ANY($2)
          AND is_done = true
-       GROUP BY log_date
-       HAVING COUNT(*) = $3
        ORDER BY log_date DESC`,
-      [req.user.id, habitIds, habitIds.length]
+      [req.user.id]
     );
 
-    // Count consecutive days backwards from today or yesterday
-    // Allow yesterday to count if today hasn't been completed yet
-    let streak = 0;
+    console.log('Total completed logs:', logsResult.rows.length);
+
+    if (logsResult.rows.length === 0) {
+      return res.json({ streak: 0 });
+    }
+
+    // Group logs by date
+    const logsByDate = {};
+    logsResult.rows.forEach(log => {
+      if (!logsByDate[log.log_date]) {
+        logsByDate[log.log_date] = new Set();
+      }
+      logsByDate[log.log_date].add(log.habit_id);
+    });
+
+    console.log('Dates with completions:', Object.keys(logsByDate).sort().reverse());
+
+    // Get today's date
     const now = new Date();
     const today = now.getFullYear() + '-' +
       String(now.getMonth() + 1).padStart(2, '0') + '-' +
       String(now.getDate()).padStart(2, '0');
     
+    // Get yesterday's date
     const yesterday = new Date(now);
     yesterday.setDate(yesterday.getDate() - 1);
     const yesterdayStr = yesterday.getFullYear() + '-' +
       String(yesterday.getMonth() + 1).padStart(2, '0') + '-' +
       String(yesterday.getDate()).padStart(2, '0');
 
-    // Check if we should start from today or yesterday
-    let startOffset = 0;
-    if (result.rows.length > 0 && result.rows[0].log_date === today) {
-      startOffset = 0; // Start from today
-    } else if (result.rows.length > 0 && result.rows[0].log_date === yesterdayStr) {
-      startOffset = 1; // Start from yesterday
+    console.log('Today:', today, 'Yesterday:', yesterdayStr);
+
+    // Helper function to check if all habits that existed on a date were completed
+    const allHabitsCompletedOnDate = (dateStr) => {
+      const date = new Date(dateStr + 'T00:00:00');
+      const completedHabits = logsByDate[dateStr] || new Set();
+      
+      // Get habits that existed on this date
+      const habitsOnDate = habits.filter(h => {
+        const createdDate = new Date(h.created_at);
+        createdDate.setHours(0, 0, 0, 0);
+        date.setHours(0, 0, 0, 0);
+        return createdDate <= date;
+      });
+
+      const allCompleted = habitsOnDate.length > 0 &&
+             habitsOnDate.every(h => completedHabits.has(h.id));
+      
+      console.log(`Date ${dateStr}: ${habitsOnDate.length} habits existed, ${completedHabits.size} completed, all done: ${allCompleted}`);
+      
+      return allCompleted;
+    };
+
+    // Determine starting point: today if completed, otherwise yesterday
+    let streak = 0;
+    let currentDate = new Date(now);
+    
+    // If today is not completed, start from yesterday
+    if (!allHabitsCompletedOnDate(today)) {
+      console.log('Today not completed, checking yesterday');
+      // If yesterday is also not completed, streak is 0
+      if (!allHabitsCompletedOnDate(yesterdayStr)) {
+        console.log('Yesterday also not completed, streak = 0');
+        return res.json({ streak: 0 });
+      }
+      // Start counting from yesterday
+      currentDate.setDate(currentDate.getDate() - 1);
+      console.log('Starting from yesterday');
     } else {
-      return res.json({ streak: 0 }); // No recent completions
+      console.log('Starting from today');
     }
 
-    // Count consecutive days
-    for (let i = 0; i < result.rows.length; i++) {
-      const logDate = result.rows[i].log_date;
-      const expectedDate = new Date(now);
-      expectedDate.setDate(expectedDate.getDate() - (i + startOffset));
-      const expectedStr = expectedDate.getFullYear() + '-' +
-        String(expectedDate.getMonth() + 1).padStart(2, '0') + '-' +
-        String(expectedDate.getDate()).padStart(2, '0');
-
-      if (logDate === expectedStr) {
+    // Count consecutive days backwards
+    while (true) {
+      const dateStr = currentDate.getFullYear() + '-' +
+        String(currentDate.getMonth() + 1).padStart(2, '0') + '-' +
+        String(currentDate.getDate()).padStart(2, '0');
+      
+      if (allHabitsCompletedOnDate(dateStr)) {
         streak++;
+        currentDate.setDate(currentDate.getDate() - 1);
       } else {
         break;
       }
     }
 
+    console.log('Final streak:', streak);
     res.json({ streak });
   } catch (err) {
     console.error(err);
