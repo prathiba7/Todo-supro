@@ -322,23 +322,17 @@ router.get('/streak', async (req, res) => {
 
     console.log('Today:', today, 'Yesterday:', yesterdayStr);
 
-    // Helper function to check if all habits that existed on a date were completed
+    // Helper function to check if all current active habits are completed on a date
     const allHabitsCompletedOnDate = (dateStr) => {
-      const date = new Date(dateStr + 'T00:00:00');
       const completedHabits = logsByDate[dateStr] || new Set();
       
-      // Get habits that existed on this date
-      const habitsOnDate = habits.filter(h => {
-        const createdDate = new Date(h.created_at);
-        createdDate.setHours(0, 0, 0, 0);
-        date.setHours(0, 0, 0, 0);
-        return createdDate <= date;
-      });
-
-      const allCompleted = habitsOnDate.length > 0 &&
-             habitsOnDate.every(h => completedHabits.has(h.id));
+      // Check if all current active habits are completed on this date
+      const allCompleted = habits.length > 0 &&
+             habits.every(h => completedHabits.has(h.id));
       
-      console.log(`Date ${dateStr}: ${habitsOnDate.length} habits existed, ${completedHabits.size} completed, all done: ${allCompleted}`);
+      console.log(`Date ${dateStr}: ${habits.length} total habits, ${completedHabits.size} completed, all done: ${allCompleted}`);
+      console.log(`  Completed habit IDs:`, Array.from(completedHabits));
+      console.log(`  Required habit IDs:`, habits.map(h => h.id));
       
       return allCompleted;
     };
