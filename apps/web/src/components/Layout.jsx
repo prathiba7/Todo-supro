@@ -8,6 +8,7 @@ const navItems = [
   { path: '/tasks', icon: 'ti-checkbox', label: 'Tasks' },
   { path: '/goals', icon: 'ti-target', label: 'Goals' },
   { path: '/habits', icon: 'ti-flame', label: 'Habits' },
+  { path: '/expenses', icon: 'ti-wallet', label: 'Expenses' },
 ]
 
 export default function Layout({ children }) {
@@ -103,7 +104,7 @@ export default function Layout({ children }) {
         animate={{ y: 0, opacity: 1 }}
         className="md:hidden fixed bottom-0 left-0 right-0 z-50 glass-effect border-t border-white/20 shadow-xl"
       >
-        <div className="grid grid-cols-5 gap-1 p-2">
+        <div className="grid grid-cols-6 gap-1 p-2">
           {navItems.map((item) => {
             const isActive = location.pathname === item.path
             return (

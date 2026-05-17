@@ -92,9 +92,23 @@ CREATE TABLE IF NOT EXISTS daily_plans (
   UNIQUE(user_id, plan_date)
 );
 
+-- Expenses table for daily expenditure tracking
+CREATE TABLE IF NOT EXISTS expenses (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  user_id UUID REFERENCES users(id) ON DELETE CASCADE,
+  amount DECIMAL(10, 2) NOT NULL CHECK (amount > 0),
+  category VARCHAR(50) NOT NULL CHECK (category IN ('food', 'groceries', 'travel', 'petrol', 'other')),
+  description TEXT,
+  expense_date DATE NOT NULL DEFAULT CURRENT_DATE,
+  created_at TIMESTAMPTZ DEFAULT NOW(),
+  updated_at TIMESTAMPTZ DEFAULT NOW()
+);
+
 -- Index for faster queries
 CREATE INDEX IF NOT EXISTS idx_habit_logs_user_date ON habit_logs(user_id, log_date);
 CREATE INDEX IF NOT EXISTS idx_habits_user ON habits(user_id, is_active);
 CREATE INDEX IF NOT EXISTS idx_daily_plans_user_date ON daily_plans(user_id, plan_date);
+CREATE INDEX IF NOT EXISTS idx_expenses_user_date ON expenses(user_id, expense_date);
+CREATE INDEX IF NOT EXISTS idx_expenses_category ON expenses(user_id, category);
 
 -- Made with Bob
