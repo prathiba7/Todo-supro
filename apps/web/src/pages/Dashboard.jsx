@@ -113,6 +113,7 @@ export default function Dashboard() {
   const [showConfetti, setShowConfetti] = useState(false)
   const previousAllDoneRef = useRef(false)
   const [showAddHabitModal, setShowAddHabitModal] = useState(false)
+  const [isEditMode, setIsEditMode] = useState(false)
   const [newHabit, setNewHabit] = useState({
     name: '',
     description: '',
@@ -389,6 +390,17 @@ export default function Dashboard() {
                   <motion.button
                     whileHover={{ scale: 1.05 }}
                     whileTap={{ scale: 0.95 }}
+                    onClick={() => setIsEditMode(!isEditMode)}
+                    className={`text-sm font-medium transition-colors flex items-center gap-1 ${
+                      isEditMode ? 'text-emerald-600 hover:text-emerald-700' : 'text-gray-600 hover:text-gray-700'
+                    }`}
+                  >
+                    <i className={`ti ${isEditMode ? 'ti-check' : 'ti-edit'} text-lg`} />
+                    {isEditMode ? 'Done' : 'Edit'}
+                  </motion.button>
+                  <motion.button
+                    whileHover={{ scale: 1.05 }}
+                    whileTap={{ scale: 0.95 }}
                     onClick={() => setShowAddHabitModal(true)}
                     className="text-sm font-medium text-violet-600 hover:text-violet-700 transition-colors flex items-center gap-1"
                   >
@@ -437,7 +449,7 @@ export default function Dashboard() {
                     Create your first habit
                   </motion.button>
                 </div>
-              ) : (
+              ) : isEditMode ? (
                 <Reorder.Group
                   axis="y"
                   values={habits}
@@ -491,6 +503,43 @@ export default function Dashboard() {
                     )
                   })}
                 </Reorder.Group>
+              ) : (
+                <div className="mt-3 space-y-2">
+                  {habits.map((habit, index) => {
+                    const isPending = togglingHabit.has(habit.id)
+                    return (
+                      <motion.button
+                        key={habit.id}
+                        initial={{ opacity: 0, x: 20 }}
+                        animate={{ opacity: 1, x: 0 }}
+                        transition={{ delay: index * 0.05 }}
+                        whileHover={{ scale: 1.02 }}
+                        whileTap={{ scale: 0.98 }}
+                        onClick={() => handleToggleHabit(habit.id)}
+                        disabled={isPending}
+                        className={`w-full flex items-center gap-3 rounded-xl border px-3 py-2.5 transition-all ${
+                          habit.is_done
+                            ? 'border-emerald-200 bg-emerald-50'
+                            : 'border-gray-200 bg-white hover:border-violet-300 hover:shadow-sm'
+                        } ${isPending ? 'opacity-60 cursor-wait' : ''}`}
+                      >
+                        <i
+                          className={`ti ${habit.icon} text-sm ${
+                            habit.is_done ? 'text-emerald-600' : 'text-gray-400'
+                          }`}
+                        />
+                        <span
+                          className={`flex-1 text-sm text-left ${
+                            habit.is_done ? 'text-emerald-700 line-through' : 'text-gray-700'
+                          }`}
+                        >
+                          {habit.name}
+                        </span>
+                        {habit.is_done && <i className="ti ti-check text-xs text-emerald-600" />}
+                      </motion.button>
+                    )
+                  })}
+                </div>
               )}
             </div>
           </motion.div>

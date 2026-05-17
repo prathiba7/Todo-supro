@@ -1,6 +1,8 @@
+import { useState, useEffect } from 'react'
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
 import { AuthProvider }  from './context/AuthContext'
 import ProtectedRoute    from './components/ProtectedRoute'
+import LoadingScreen     from './components/LoadingScreen'
 import Login             from './pages/auth/Login'
 import Register          from './pages/auth/Register'
 import Dashboard         from './pages/Dashboard'
@@ -18,6 +20,21 @@ const Placeholder = ({ name }) => (
 )
 
 export default function App() {
+  const [isLoading, setIsLoading] = useState(true)
+
+  useEffect(() => {
+    // Simulate initial app loading (checking auth, loading resources, etc.)
+    const timer = setTimeout(() => {
+      setIsLoading(false)
+    }, 2000) // Show loading screen for 2 seconds
+
+    return () => clearTimeout(timer)
+  }, [])
+
+  if (isLoading) {
+    return <LoadingScreen />
+  }
+
   return (
     <BrowserRouter>
       <AuthProvider>

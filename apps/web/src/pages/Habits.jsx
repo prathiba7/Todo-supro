@@ -168,6 +168,7 @@ export default function Habits() {
   const [showCelebration, setShowCelebration] = useState(false)
   const [showConfetti, setShowConfetti] = useState(false)
   const previousAllDoneRef = useRef(false)
+  const [isEditMode, setIsEditMode] = useState(false)
   
   // Date selection state
   const [selectedDate, setSelectedDate] = useState(() => {
@@ -418,15 +419,26 @@ export default function Habits() {
                 {completeDays} of {maxDays} days complete
               </p>
             </div>
-            <motion.button
-              whileHover={{ scale: 1.05 }}
-              whileTap={{ scale: 0.95 }}
-              onClick={() => setShowAddModal(true)}
-              className="btn btn-primary"
-            >
-              <i className="ti ti-plus text-lg" />
-              Add Habit
-            </motion.button>
+            <div className="flex items-center gap-2">
+              <motion.button
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+                onClick={() => setIsEditMode(!isEditMode)}
+                className={`btn ${isEditMode ? 'btn-secondary' : 'bg-gray-100 hover:bg-gray-200 text-gray-700'}`}
+              >
+                <i className={`ti ${isEditMode ? 'ti-check' : 'ti-edit'} text-lg`} />
+                {isEditMode ? 'Done' : 'Edit'}
+              </motion.button>
+              <motion.button
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+                onClick={() => setShowAddModal(true)}
+                className="btn btn-primary"
+              >
+                <i className="ti ti-plus text-lg" />
+                Add Habit
+              </motion.button>
+            </div>
           </div>
 
           {/* Date Navigator */}
@@ -617,30 +629,132 @@ export default function Habits() {
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.2 }}
             >
-              <Reorder.Group
-                axis="y"
-                values={habits}
-                onReorder={setHabits}
-                className="space-y-3"
-              >
-                {habits.map((habit, index) => {
-                  const colorClasses = getColorClasses(habit.color)
-                  const isPending = toggling.has(habit.id)
+              {isEditMode ? (
+                <Reorder.Group
+                  axis="y"
+                  values={habits}
+                  onReorder={setHabits}
+                  className="space-y-3"
+                >
+                  {habits.map((habit, index) => {
+                    const colorClasses = getColorClasses(habit.color)
+                    const isPending = toggling.has(habit.id)
 
-                  return (
-                    <Reorder.Item
-                      key={habit.id}
-                      value={habit}
-                      className="group"
-                      onDragEnd={() => {
-                        // Save order when drag ends
-                        const habitIds = habits.map(h => h.id)
-                        reorderHabits(habitIds).catch(err => {
-                          console.error('Failed to save habit order:', err)
-                        })
-                      }}
-                    >
-                      <div
+                    return (
+                      <Reorder.Item
+                        key={habit.id}
+                        value={habit}
+                        className="group"
+                        onDragEnd={() => {
+                          // Save order when drag ends
+                          const habitIds = habits.map(h => h.id)
+                          reorderHabits(habitIds).catch(err => {
+                            console.error('Failed to save habit order:', err)
+                          })
+                        }}
+                      >
+                        <div
+                          className={`card p-5 transition-all duration-300 ${
+                            habit.is_done
+                              ? `${colorClasses.lightClass} border-${habit.color}-200`
+                              : 'hover:shadow-lg'
+                          } ${isPending ? 'opacity-60' : ''}`}
+                        >
+                          <div className="flex items-center gap-4">
+                            {/* Drag Handle - Only visible in edit mode */}
+                            <div className="flex h-12 w-8 flex-shrink-0 items-center justify-center text-gray-400 hover:text-gray-600 cursor-grab active:cursor-grabbing">
+                              <i className="ti ti-grip-vertical text-xl" />
+                            </div>
+
+                            {/* Checkbox */}
+                            <motion.button
+                              whileHover={{ scale: 1.1 }}
+                              whileTap={{ scale: 0.9 }}
+                              onClick={(e) => {
+                                e.stopPropagation()
+                                handleToggle(habit.id)
+                              }}
+                              disabled={isPending}
+                              className={`flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-xl transition-all ${
+                                habit.is_done
+                                  ? `${colorClasses.class} shadow-lg`
+                                  : 'bg-gray-100 hover:bg-gray-200'
+                              }`}
+                            >
+                              {habit.is_done ? (
+                                <i className="ti ti-check text-2xl text-white" />
+                              ) : (
+                                <i className={`ti ${habit.icon} text-2xl text-gray-500`} />
+                              )}
+                            </motion.button>
+
+                            {/* Content - Clickable to toggle */}
+                            <div
+                              className="flex-1 min-w-0 cursor-pointer"
+                              onClick={() => !isPending && handleToggle(habit.id)}
+                            >
+                              <h3
+                                className={`text-lg font-semibold transition-all ${
+                                  habit.is_done
+                                    ? `${colorClasses.textClass} line-through`
+                                    : 'text-gray-900'
+                                }`}
+                              >
+                                {habit.name}
+                              </h3>
+                              {habit.description && (
+                                <p
+                                  className={`text-sm mt-0.5 ${
+                                    habit.is_done ? 'text-gray-500' : 'text-gray-600'
+                                  }`}
+                                >
+                                  {habit.description}
+                                </p>
+                              )}
+                            </div>
+
+                            {/* Edit Button - Always visible in edit mode */}
+                            <motion.button
+                              whileHover={{ scale: 1.1 }}
+                              whileTap={{ scale: 0.9 }}
+                              onClick={(e) => {
+                                e.stopPropagation()
+                                handleEditHabit(habit)
+                              }}
+                              className="flex h-10 w-10 items-center justify-center rounded-lg bg-blue-50 text-blue-600 hover:bg-blue-100"
+                            >
+                              <i className="ti ti-edit text-lg" />
+                            </motion.button>
+
+                            {/* Delete Button - Always visible in edit mode */}
+                            <motion.button
+                              whileHover={{ scale: 1.1 }}
+                              whileTap={{ scale: 0.9 }}
+                              onClick={(e) => {
+                                e.stopPropagation()
+                                handleDeleteHabit(habit.id)
+                              }}
+                              className="flex h-10 w-10 items-center justify-center rounded-lg bg-red-50 text-red-600 hover:bg-red-100"
+                            >
+                              <i className="ti ti-trash text-lg" />
+                            </motion.button>
+                          </div>
+                        </div>
+                      </Reorder.Item>
+                    )
+                  })}
+                </Reorder.Group>
+              ) : (
+                <div className="space-y-3">
+                  {habits.map((habit) => {
+                    const colorClasses = getColorClasses(habit.color)
+                    const isPending = toggling.has(habit.id)
+
+                    return (
+                      <motion.div
+                        key={habit.id}
+                        initial={{ opacity: 0, y: 10 }}
+                        animate={{ opacity: 1, y: 0 }}
                         className={`card p-5 transition-all duration-300 ${
                           habit.is_done
                             ? `${colorClasses.lightClass} border-${habit.color}-200`
@@ -648,11 +762,6 @@ export default function Habits() {
                         } ${isPending ? 'opacity-60' : ''}`}
                       >
                         <div className="flex items-center gap-4">
-                          {/* Drag Handle */}
-                          <div className="flex h-12 w-8 flex-shrink-0 items-center justify-center text-gray-400 hover:text-gray-600 cursor-grab active:cursor-grabbing">
-                            <i className="ti ti-grip-vertical text-xl" />
-                          </div>
-
                           {/* Checkbox */}
                           <motion.button
                             whileHover={{ scale: 1.1 }}
@@ -699,38 +808,12 @@ export default function Habits() {
                               </p>
                             )}
                           </div>
-
-                          {/* Edit Button */}
-                          <motion.button
-                            whileHover={{ scale: 1.1 }}
-                            whileTap={{ scale: 0.9 }}
-                            onClick={(e) => {
-                              e.stopPropagation()
-                              handleEditHabit(habit)
-                            }}
-                            className="opacity-0 group-hover:opacity-100 transition-opacity flex h-10 w-10 items-center justify-center rounded-lg bg-blue-50 text-blue-600 hover:bg-blue-100"
-                          >
-                            <i className="ti ti-edit text-lg" />
-                          </motion.button>
-
-                          {/* Delete Button */}
-                          <motion.button
-                            whileHover={{ scale: 1.1 }}
-                            whileTap={{ scale: 0.9 }}
-                            onClick={(e) => {
-                              e.stopPropagation()
-                              handleDeleteHabit(habit.id)
-                            }}
-                            className="opacity-0 group-hover:opacity-100 transition-opacity flex h-10 w-10 items-center justify-center rounded-lg bg-red-50 text-red-600 hover:bg-red-100"
-                          >
-                            <i className="ti ti-trash text-lg" />
-                          </motion.button>
                         </div>
-                      </div>
-                    </Reorder.Item>
-                  )
-                })}
-              </Reorder.Group>
+                      </motion.div>
+                    )
+                  })}
+                </div>
+              )}
             </motion.div>
 
             {/* Heatmap */}
